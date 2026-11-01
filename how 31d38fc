@@ -1,0 +1,36 @@
+[33m9a1334c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m done website
+[33m31d38fc[m My
+[33m39f508e[m Complete website
+[33m59ae53a[m complete update
+[33m43b825e[m Login also done
+[33m951132b[m New visit
+[33m1cc2215[m New main
+[33m2fe9bfc[m New Version
+[33m48b395b[m Latest site
+[33m39acf83[m New sites
+[33md68212a[m Fire_Detection
+[33m85c4ffc[m Update sites
+[33maf41096[m Updated site
+[33m75812db[m delete
+[33m9c6828b[m file
+[33mb1b38a6[m Space_3
+[33mc06b7c9[m Space_2
+[33mfbfb2dc[m space
+[33m2451b9d[m update ui
+[33mcommit 31d38fccc6d81ef526a578230e08d16506354d00[m
+Author: arnavjain8001 <jainarnav8001@gmail.com>
+Date:   Wed Jul 8 21:31:38 2026 +0530
+
+    My
+
+[1mdiff --git a/index.html b/index.html[m
+[1mindex 564b991..913e0cb 100644[m
+[1m--- a/index.html[m
+[1m+++ b/index.html[m
+[36m@@ -503,4 +503,5 @@[m
+     <script src="app.js"></script>[m
+ </body>[m
+ [m
+[32m+[m
+ </html>[m
+\ No newline at end of file[m

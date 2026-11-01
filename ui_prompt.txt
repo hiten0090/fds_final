@@ -1,0 +1,154 @@
+================================================================================
+FIREGUARD DASHBOARD: CURRENT UI SPECIFICATION & MASTER UI DESIGN PROMPT
+================================================================================
+File: ui_prompt.txt
+Project: FireGuard - Smart IoT Fire Detection, Surveillance & Digital Twin Operations
+Style: Medium-Light Executive Industrial IoT Theme (Stripe / Linear / Datadog Aesthetic)
+================================================================================
+
+PART 1: READY-TO-USE IMAGE & UI GENERATOR PROMPT (COPY-PASTE READY)
+--------------------------------------------------------------------------------
+Copy and paste the text block below into any AI image generator (Midjourney, DALL-E 3, 
+Stable Diffusion) or UI generation tool (v0.dev, Claude, GPT-4o, Cursor):
+
+"""
+A professional, ultra-modern, high-end web dashboard UI for an industrial IoT fire 
+safety and emergency operations command center named 'FireGuard'. 
+
+Design Style & Atmosphere:
+- Medium-Light Executive Tech Aesthetic (inspired by Stripe Radar, Linear, and Datadog).
+- Background: Warm Slate-100 (#EEF2F6) providing crisp, tangible contrast against cards.
+- Cards: Pure crisp white (#FFFFFF) with razor-sharp 1px subtle Slate-300 borders (#CBD5E1), 
+  rounded 14px corners, and layered physical ambient drop shadows (0 1px 3px rgba(15,23,42,0.07)).
+- Typography: Clean Inter font hierarchy. Bold, high-contrast Slate-900 (#0F172A) headers, 
+  Slate-600 (#475569) subtitles, and tabular monospace digits for live telemetry readings.
+
+Layout & Structure (16:9 Desktop Viewport):
+1. Left Vertical Navigation Sidebar:
+   - Deep midnight slate (#0F172A, 248px width) with subtle 1px border.
+   - FireGuard shield logo in linear blue gradient (#2563EB to #1D4ED8) with flame icon.
+   - Clean menu items: 'Overview' (active pill in vibrant #2563EB with soft glow), 
+     'Live Monitoring', 'Camera Surveillance' (with 'LIVE' green pill badge), 
+     'Sensor Analytics', 'Event History' (badge '20'), 'System Diagnostics', 'Settings'.
+
+2. Sticky Top Header Bar:
+   - Clean white header (#FFFFFF, 64px height) with subtle bottom border (#CBD5E1).
+   - Title: 'Fire Safety Control Center' with subtitle 'Overview • Command Center • Verified Telemetry Stream'.
+   - Status Pill: Pill badge '● System Operational' in soft emerald (#ECFDF5 background, 
+     #065F46 text, #6EE7B7 border) with a 7px pulsing green glowing dot.
+   - Tabular real-time digital clock (e.g. '06:16:31 PM • 01 Nov 2026') and audio siren button.
+
+3. Top Row - 3 Live Telemetry Sensor Cards (Horizontal Grid):
+   - Card 1 (Temperature Sensor DHT11): Accent top border in vivid orange (#EA580C). 
+     Soft orange icon badge '🌡️', big metric '26.5 °C', sky-blue humidity pill '💧 Humidity: 46%', 
+     soft green status tag 'Normal Operating Envelope', and a sleek 140px height real-time 
+     line chart with vibrant orange stroke and translucent gradient area fill.
+   - Card 2 (Smoke Density Sensor MQ-2): Accent top border in rich purple (#7C3AED). 
+     Soft purple icon badge '💨', big metric '204 PPM', soft green status tag 
+     'Normal Operating Envelope', and a sleek 140px height real-time line chart with purple 
+     stroke and translucent gradient area fill.
+   - Card 3 (Digital Flame Sensor Active-Low): Accent top border in emerald green (#10B981). 
+     Soft green icon badge '🔥', big metric 'CLEAR / NORMAL' in bold emerald text, soft green 
+     tag 'Optical Baseline Safe', and a sleek 140px height step line chart.
+
+4. Main 2-Column Dashboard Grid:
+   - Left Column (62% width):
+     * Row 1 (Split 2-Card Grid):
+       - Card A: ESP32-CAM Live Surveillance Feed. Sleek 230px height tactical CCTV viewport 
+         with dark navy background (#0B132B) and subtle radial dot grid. Corner HUD overlays: 
+         top-left 'CAM-01 • ESP32-CAM [STANDBY]', bottom-right '1080p READY • RELAY ARMED'. 
+         Center graphic features glowing armed radar reticle icon with 'OPTICAL SURVEILLANCE ARMED' 
+         and a clean white button '▶ Connect Live Stream'.
+       - Card B: Real-time Telemetry Trends chart showing 20-second rolling dual-axis curves 
+         for temperature and smoke concentration.
+     * Row 2: Verified Hardware Nodes card displaying 5 compact mini-cards (Temperature S-01, 
+       Smoke S-02, Flame S-03, ESP32 Controller, ESP32-CAM Unit), each with glowing green 
+       status dots and 'Online / Connected' badges.
+     * Row 3: Emergency SMS Alerts card with Twilio/Fast2SMS status pill, recipient phone 
+       number input, raw monospace SMS payload preview box, and an executive green 
+       1-Click WhatsApp SOS dispatch button (#10B981).
+
+   - Right Column (38% width):
+     * System Safety Matrix card with crisp row items (Fire Status, Deluge/Sprinkler Relay, 
+       Supabase Realtime, Backend WebSocket) featuring green and blue status dots.
+     * Facility Location & First Responder Routing card displaying facility name, address, 
+       monospace coordinate tags ('LAT: 28.640016', 'LNG: 77.112264'), and action buttons: 
+       'Open in Google Maps', 'Share Location', 'Copy Link'.
+     * Incident Status card with 4px blue left border, incident count, and status badge '✔ All Clear'.
+     * Safety Command & Control card with action buttons: 'Manual Emergency Override' in bold 
+       red (#EF4444), 'Sprinkler Relay: OFF', 'Auto Mode: ON', and 'Drill Test'.
+
+5. Visual Tone & Finishing Touches:
+   - Ultra-crisp, professional, enterprise-grade, clean layout with zero awkward whitespace.
+   - Symmetrical, polished, human-crafted design ready for senior hackathon/academic judges.
+"""
+
+--------------------------------------------------------------------------------
+PART 2: EXACT CODEBASE COMPONENT & DESIGN SYSTEM SPECIFICATION
+--------------------------------------------------------------------------------
+
+1. DESIGN TOKENS & COLOR PALETTE
+- Application Background:
+  `--bg-main: #EEF2F6;` (Medium-light warm slate, provides contrast against white cards)
+- Card Surfaces:
+  `--bg-card: #FFFFFF;` (Pure crisp white)
+- Card Borders:
+  `--border-card: #CBD5E1;` (Slate-300, 1px solid, razor-sharp framing)
+- Internal Dividers:
+  `--border-subtle: #E2E8F0;`
+- Typography Colors:
+  * Primary Text: `#0F172A` (Slate-900, high-contrast)
+  * Secondary Text: `#475569` (Slate-600)
+  * Muted Helper Text: `#64748B` (Slate-500)
+- Brand & Sensor Accent Palette:
+  * Brand Corporate Blue: `#2563EB` (Hover: `#1D4ED8`, Tint: `#EFF6FF`, Border: `#93C5FD`)
+  * Safety Green / Normal: `#10B981` (Text: `#065F46`, Tint: `#ECFDF5`, Border: `#6EE7B7`)
+  * Thermal Orange / Temp: `#EA580C` (Text: `#C2410C`, Tint: `#FFF7ED`, Border: `#FDBA74`)
+  * Combustible Gas / Smoke: `#7C3AED` (Text: `#5B21B6`, Tint: `#F5F3FF`, Border: `#DDD6FE`)
+  * Emergency Red / Hazard: `#EF4444` (Text: `#B91C1C`, Tint: `#FEF2F2`, Border: `#FCA5A5`)
+- Shadows:
+  * Standard Card: `0 1px 3px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04)`
+  * Hover Lift: `0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)`
+
+2. LAYOUT HIERARCHY (From `src/App.jsx`)
+- Root Container (`.app-container`):
+  * Left Fixed Sidebar (`.app-sidebar`, 248px width, deep slate `#0F172A`).
+  * Right Main View (`.app-main`, dynamic left margin 248px).
+- Sticky Header (`.top-header`, 64px height):
+  * Left: Title ('Fire Safety Control Center') & breadcrumbs.
+  * Right: Digital clock, verified status pill (`.system-status-pill.normal`), audio siren unlock button (`🔊 Siren Armed`), avatar (`FG`).
+- Content Wrapper (`.main-wrapper`):
+  * Overview View (`.page-section.active`):
+    - Top Section: `.sensors-page-grid` (3 columns, 18px gap).
+      * Card 1: `.sensor-detail-card.temp-accent-card` (border-top: 3.5px solid #EA580C).
+      * Card 2: `.sensor-detail-card.smoke-accent-card` (border-top: 3.5px solid #7C3AED).
+      * Card 3: `.sensor-detail-card.flame-accent-card` (border-top: 3.5px solid #10B981).
+    - Bottom Section: `.dashboard-main-grid` (62% left column, 38% right column, 20px gap).
+      * Left Column:
+        1. `.mid-cards-grid` (2-column subgrid: ESP32-CAM Card + Telemetry Trends Chart).
+        2. `.active-sensors-card` (Verified Hardware Nodes: 5 mini-cards).
+        3. `SmsAlertCard` (Emergency SMS & 1-Click WhatsApp Dispatch).
+      * Right Column:
+        1. System Safety Matrix (Status list with indicator dots).
+        2. `FacilityLocationCard` (GPS coordinates, facility name, address, Google Maps action).
+        3. Latest Alert Panel (Incident status).
+        4. Controls Panel (Command & Control action buttons).
+
+3. DYNAMIC EMERGENCY STATE (When Fire Hazard is Detected)
+- CSS Trigger: `.app-container.emergency-mode`
+- Background changes to soft rose: `#FFF1F2`
+- Top Header displays pulsing sticky emergency banner:
+  `linear-gradient(90deg, #DC2626 0%, #B91C1C 100%)`
+- Card borders transition to red: `#FCA5A5` with subtle hazard glow.
+- System Status Pill switches to:
+  `background: #FEF2F2; color: #B91C1C; border-color: #FCA5A5; font-weight: 800;`
+- Evacuation Popup (`EmergencyPopup.jsx`):
+  Frosted glass backdrop filter (`backdrop-filter: blur(8px)`) with dual-frequency 
+  acoustic evacuation siren sweep generated via Web Audio API (`AudioService.js`).
+- ESP32-CAM switches from standby to live MJPEG stream automatically.
+- 1-Click WhatsApp Direct SOS button glows with emergency dispatch payload.
+
+================================================================================
+END OF UI SPECIFICATION (ui_prompt.txt)
+================================================================================
+

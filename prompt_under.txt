@@ -1,0 +1,176 @@
+================================================================================
+FIREGUARD: IOT DIGITAL TWIN FIRE DETECTION & EMERGENCY COMMAND CENTER
+MASTER CONTINUATION & UI ARCHITECTURE PROMPT FOR AI ASSISTANTS
+================================================================================
+
+[INSTRUCTION FOR AI: READ AND DEEP-ANALYZE THIS ENTIRE PROMPT BEFORE RESPONDING]
+Before proposing any changes, writing any code, or generating any design, you MUST 
+first perform a comprehensive, deep technical analysis of this prompt, understand the 
+entire end-to-end architecture (Edge Hardware, Cloud Database, WebSocket Engine, 
+Digital Twin Frontend, Emergency Dispatch), and confirm your full understanding of the 
+project constraints and operational workflows.
+
+--------------------------------------------------------------------------------
+1. PROJECT OVERVIEW & EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+Project Name: FireGuard (Smart Fire Detection, Digital Twin & Emergency Operations)
+Core Purpose: An enterprise-grade, IoT-driven industrial fire hazard monitoring, 
+digital twin facility projection, live camera surveillance, and automated first 
+responder dispatch system designed for mission-critical facilities (factories, 
+server rooms, warehouses, residential towers).
+
+Key Differentiators:
+- Zero-latency local edge fail-safe: The physical microcontroller trips an on-site 
+  alarm buzzer immediately at the hardware level (0ms latency), independent of 
+  internet connectivity or cloud status.
+- Cloud Real-time Sync: Telemetry streams continuously to a cloud database (Supabase) 
+  over WebSockets, allowing sub-second worldwide browser updates.
+- Digital Twin BIM Visualization: Physical building layout (Sectors A, B, C) mapped 
+  dynamically with thermal and gas hazard envelopes.
+- Dual-Mode UI Architecture: Seamlessly transitions between "Normal Operations Mode" 
+  (Medium-light executive slate monitoring) and "Emergency Operations Center Mode" 
+  (High-visibility, pulsed acoustic siren and evacuation command mode).
+- Automated First Responder Routing: Pre-configured GPS facility geolocation with 
+  turn-by-turn Google Maps navigation, automated SMS alerts (Fast2SMS/Twilio), 
+  and 1-Click WhatsApp direct emergency SOS dossier dispatch.
+
+--------------------------------------------------------------------------------
+2. HARDWARE ARCHITECTURE & EDGE SENSOR TIERS
+--------------------------------------------------------------------------------
+A. ESP32 Main Sensor Node (Microcontroller: ESP32 DOIT DevKit V1)
+   - Temperature & Humidity: DHT11 Sensor connected to GPIO 4.
+     * Safe Operating Envelope: < 60°C.
+     * Hazard Trigger: >= 60.0°C initiates thermal alarm.
+   - Smoke & Combustible Gas: MQ-2 Gas Sensor Analog Pin connected to GPIO 34 (ADC1_CH6).
+     * Baseline Clean Air: ~150 - 300 PPM.
+     * Hazard Trigger: >= 1600 PPM initiates combustible gas/smoke hazard.
+   - Optical Flame Sensor: Digital Active-Low IR Flame Detector connected to GPIO 13.
+     * Safe State: HIGH (1) - No infrared flicker.
+     * Hazard State: LOW (0) - Direct fire/flame detected optically.
+   - Local Audio Alarm: Piezo Buzzer / 5V Relay connected to GPIO 23.
+     * Hardware Interlock: Fires immediately when Flame == LOW or Gas >= 1600 or Temp >= 60.
+   - Wireless Uplink: Connects to local 2.4 GHz WiFi (WPA2) and dispatches JSON 
+     payloads via HTTPS REST POST directly to Supabase cloud table `sensor_data`.
+
+B. ESP32-CAM Video Node (Module: AI-Thinker OV2640 Camera Module)
+   - Runs high-performance MJPEG HTTP video streaming server on Port 80 (`/stream`).
+   - Normal State: Standby / Armed mode to minimize power and network overhead.
+   - Emergency State: Instantly activates on-demand live video surveillance in the 
+     dashboard upon detection of any hazard or manual officer trigger.
+
+--------------------------------------------------------------------------------
+3. CLOUD, BACKEND & DATABASE ARCHITECTURE
+--------------------------------------------------------------------------------
+A. Database: Supabase Cloud Database (PostgreSQL)
+   - Table Name: `sensor_data`
+   - Schema Fields:
+     * `id`: Auto-incrementing BigInt Primary Key.
+     * `temperature`: Float / Numeric (°C).
+     * `humidity`: Float / Numeric (%).
+     * `gas_value`: Integer / Float (PPM).
+     * `flame_state`: Integer (0 = Flame Detected, 1 = Clear / Safe).
+     * `buzzer`: Boolean (true = Sounding, false = Off).
+     * `fire_status`: Boolean (true = Emergency Active, false = Nominal).
+     * `created_at` / `timestamp`: ISO-8601 UTC timestamp.
+   - Real-time Engine: Supabase PostgreSQL CDC (Change Data Capture) via WebSockets 
+     pushes newly inserted records into the React dashboard in real time.
+
+B. Backend Server (Node.js + Express, Port 5000):
+   - Endpoints:
+     * GET `/api/fire/status`: Latest telemetry snapshot and system status.
+     * GET `/api/fire/table`: Recent 25-50 historical database telemetry records.
+     * POST `/api/fire/trigger`: Manual fire drill or remote test activation.
+     * POST `/api/sms/send`: Fast2SMS / Twilio SMS gateway dispatch.
+   - Camera Relay: Proxies the ESP32-CAM MJPEG stream to avoid browser mixed-content 
+     or CORS restrictions.
+
+--------------------------------------------------------------------------------
+4. FRONTEND DASHBOARD & DIGITAL TWIN ARCHITECTURE
+--------------------------------------------------------------------------------
+- Framework: React 18 + Vite (ES Modules, Vanilla CSS architecture).
+- Data Visualizations: Chart.js 4.x running 20-second rolling real-time sliding 
+  windows for Temperature (°C), Smoke Density (PPM), and Digital Flame (0/1).
+- Sound System (`AudioService.js`): Uses the browser Web Audio API to synthesize dual-tone 
+  acoustic emergency evacuation sirens without relying on external MP3 assets.
+- Location Engine (`locationService.js`): Stores and manages GPS facility coordinates 
+  (Latitude, Longitude), generates Google Maps navigation links, and provides Web 
+  Share API integration.
+- SMS & WhatsApp Engine (`smsService.js` & `whatsappService.js`): Formats standardized 
+  incident dossiers (Timestamp, Facility Name, Coordinates, Active Hazard Breakdown, 
+  Map Link) and triggers 1-Click WhatsApp web/mobile dispatch.
+- Component Tree:
+  * `src/App.jsx`: Main State Machine & Root Layout.
+  * `src/components/DigitalTwinFacility.jsx`: Architectural schematic with animated heatmaps.
+  * `src/components/FacilityLocationCard.jsx`: GPS coordinate card & maps routing.
+  * `src/components/SmsAlertCard.jsx`: Emergency SMS & WhatsApp dispatch console.
+  * `src/components/BackendDataTable.jsx`: Live PostgreSQL `sensor_data` inspection table.
+  * `src/components/EmergencyBanner.jsx`: High-visibility sticky emergency header banner.
+  * `src/components/EmergencyPopup.jsx`: Frosted evacuation modal dialog.
+
+--------------------------------------------------------------------------------
+5. USER'S CORE GOAL & SPECIFIC CHALLENGE
+--------------------------------------------------------------------------------
+Challenge:
+Academic / hackathon judges noted that earlier iterations looked generic, unpolished, 
+or "obviously AI-generated" (e.g., awkward blank spaces, oversized empty boxes, 
+stark blinding hospital-white backgrounds, cut-off charts, or clunky styling).
+
+Target Aesthetic:
+The user demands a top-tier, ultra-professional, human-designed industrial IoT / 
+security operations UI (comparable to Datadog, Linear, Stripe Radar, Samsara, or 
+Verkada Enterprise Security).
+Key visual characteristics required:
+- Medium-Light Executive Palette: Contrast background (Slate-100 `#EEF2F6`) with crisp 
+  pure white cards (`#FFFFFF`), well-defined Slate-300 borders (`#CBD5E1`), and physical 
+  multi-layered drop shadows.
+- Symmetrical, Balanced Dashboard Layout: No dead zones or empty horizontal deserts.
+- High-Tech CCTV Camera Viewport: Sized proportionally (height ~230-260px) with radar 
+  grid markings, corner HUD brackets, status badges, and clear connect actions.
+- Compact Live Metric Graphs: Clean 140px height canvas with translucent colored 
+  under-curve area fills and high-contrast typography.
+- Professional Controls & Badges: Pill-shaped status indicators, high-contrast action 
+  buttons, and clear visual hierarchy.
+
+--------------------------------------------------------------------------------
+6. MANDATORY INSTRUCTIONS FOR THE AI IN THIS CHAT
+--------------------------------------------------------------------------------
+When you receive this prompt, you MUST follow these steps in exact order:
+
+STEP 1: PERFORM A DEEP TECHNICAL ANALYSIS
+- Do NOT output generic code immediately.
+- First, write a thorough, intelligent analysis confirming that you understand:
+  1. The 4 hardware sensors and exact ESP32 pin mappings.
+  2. The Supabase `sensor_data` database structure and real-time WebSocket flow.
+  3. The dual operational states (Normal Monitoring vs Fire Emergency Mode).
+  4. The exact layout composition of the current dashboard.
+
+STEP 2: CREATE & PRESENT PROFESSIONAL UI DESIGN CONCEPTS / IMAGES
+- Based on your deep understanding of this system, generate 3 to 4 distinctly 
+  different, ultra-professional UI concept mockups / images showcasing how the 
+  dashboard should look to impress hackathon/academic judges.
+- Examples of concept directions to explore:
+  * Concept A: Executive Clean Enterprise Light Mode (Stripe / Linear style with Slate-100 
+    background, pure white cards, crisp typography, and high-contrast telemetry).
+  * Concept B: Mission Control High-Tech Operations (Sleek dark/slate tactical command 
+    center with glowing telemetry lines, CCTV HUD overlays, and digital twin heatmaps).
+  * Concept C: Industrial Smart Facility & BIM Glassmorphism (Sophisticated modern 
+    glassmorphism with building schematics, clean pill tags, and floating metric widgets).
+  * Concept D: Emergency Response Tactical Console (High-readability defense/fire rescue 
+    console with instant dispatch controls, live satellite maps, and split camera views).
+- Present these images/concepts clearly to the user with explanations of their design 
+  philosophy, card hierarchy, and visual polish.
+- Ask the user which concept they prefer before applying any changes.
+
+STEP 3: STRICT GUARDRAILS & CODE PROTECTION RULES (ONCE DESIGN IS SELECTED)
+- DO NOT break or alter backend API routes (`/api/fire/*`, `/api/sms/*`).
+- DO NOT modify Supabase client configuration, table schema, or column names.
+- DO NOT change hardware pin mappings (GPIO 4, 34, 13, 23) in Arduino `.ino` files.
+- DO NOT remove core functional capabilities (1-Click WhatsApp dispatch, Google Maps 
+  routing, Web Audio siren synthesizer, live camera stream relay, Chart.js tickers).
+- ALL work must be strictly focused on UI, CSS styling (`src/index.css`), layout 
+  structure, spacing, typography, and frontend visual polish.
+
+================================================================================
+END OF MASTER PROMPT — READY FOR DEEP ANALYSIS AND UI CONCEPT GENERATION
+================================================================================
+
