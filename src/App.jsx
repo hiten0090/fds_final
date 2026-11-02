@@ -137,14 +137,8 @@ export default function App() {
   const dashSmokeChartRef = useRef(null);
   const dashFlameChartRef = useRef(null);
 
-  // Data Buffers for charts (sliding window of 24 ticks with pre-seeded harmonic telemetry)
+  // Data Buffers for charts (sliding window of 24 ticks, initialized to 0/neutral)
   const maxTicks = 24;
-  const generateInitialWave = (base, amp, freq = 0.35) => {
-    return Array.from({ length: 24 }, (_, i) => {
-      const v = base + Math.sin(i * freq) * amp + Math.cos(i * freq * 0.6) * (amp * 0.4);
-      return Number(v.toFixed(1));
-    });
-  };
 
   const chartLabelsRef = useRef(
     Array.from({ length: 24 }, (_, i) => {
@@ -152,11 +146,9 @@ export default function App() {
       return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     })
   );
-  const chartTempDataRef = useRef(generateInitialWave(26.5, 0.55, 0.42));
-  const chartSmokeDataRef = useRef(generateInitialWave(204, 6.2, 0.35));
-  const chartFlameDataRef = useRef(
-    Array.from({ length: 24 }, (_, i) => Number((0.04 + Math.sin(i * 0.45) * 0.02).toFixed(3)))
-  );
+  const chartTempDataRef = useRef(Array.from({ length: 24 }, () => 0));
+  const chartSmokeDataRef = useRef(Array.from({ length: 24 }, () => 0));
+  const chartFlameDataRef = useRef(Array.from({ length: 24 }, () => 0));
 
   // Refs to prevent stale closures
   const sensorsRef = useRef(sensors);
@@ -166,6 +158,7 @@ export default function App() {
   const emergencyOverrideRef = useRef(emergencyOverride);
   const systemStateRef = useRef(systemState);
   const isFireActiveRef = useRef(false);
+  const isDataStaleRef = useRef(true);
 
   useEffect(() => { sensorsRef.current = sensors; }, [sensors]);
   useEffect(() => { currentTabRef.current = currentTab; }, [currentTab]);
@@ -173,6 +166,7 @@ export default function App() {
   useEffect(() => { sprinklerActiveRef.current = sprinklerActive; }, [sprinklerActive]);
   useEffect(() => { emergencyOverrideRef.current = emergencyOverride; }, [emergencyOverride]);
   useEffect(() => { systemStateRef.current = systemState; }, [systemState]);
+  useEffect(() => { isDataStaleRef.current = isDataStale; }, [isDataStale]);
 
   // Scroll reveal observer: smoothly brings tiles up on scroll and when navigating tabs
   useEffect(() => {
@@ -255,12 +249,13 @@ export default function App() {
   }, [currentTab]);
 
   // Overall Emergency State computed (Condition: Supabase confirmed fire OR Manual Override OR CRITICAL sensor limits)
-  const isFireActive = supabaseFireStatus || emergencyOverride || (systemState === 'CRITICAL');
+  // When device is offline/stale, stale historical records do NOT trigger emergency alarms!
+  const isFireActive = !isDataStale && (supabaseFireStatus || (systemState === 'CRITICAL')) || emergencyOverride;
   isFireActiveRef.current = isFireActive;
 
   const activeSeverity = supabaseFireStatus ? supabaseFireSeverity : (emergencyOverride ? 'CRITICAL' : 'WARNING');
   const isBuzzerActive = sprinklerActive || isFireActive;
-  const isWarningActive = systemState === 'WARNING' && !isFireActive;
+  const isWarningActive = !isDataStale && (systemState === 'WARNING') && !isFireActive;
 
   // Verified system status text for header
   let verifiedStatusMode = 'normal'; // 'normal', 'warning', 'emergency', 'unavailable'
@@ -274,7 +269,7 @@ export default function App() {
     verifiedStatusText = 'ELEVATED RISK • INSPECTION ADVISED';
   } else if (isDataStale || !supabaseConnected) {
     verifiedStatusMode = 'unavailable';
-    verifiedStatusText = !supabaseConnected ? 'DATABASE OFFLINE' : 'DATA STALE (>30s)';
+    verifiedStatusText = !supabaseConnected ? 'DATABASE OFFLINE' : 'HARDWARE OFFLINE (STANDBY)';
   }
 
   // Audio system state listener
@@ -755,46 +750,47 @@ export default function App() {
     };
   }, []);
 
-  // Real-time Chart Ticker with live physical wave dynamics
+  // Real-time Chart Ticker (NO fake waves: pushes real values when live, neutral 0 when offline)
   useEffect(() => {
-    let tickCount = 0;
     const uiTick = () => {
-      tickCount++;
+      const isStale = isDataStaleRef.current;
       const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
       chartLabelsRef.current.push(timestamp);
       chartLabelsRef.current.shift();
 
-      const rawTemp = sensorsRef.current.temp.val;
-      const baseTemp = typeof rawTemp === 'number' && !isNaN(rawTemp) ? rawTemp : 26.5;
-      const tempWave = baseTemp >= 45
-        ? baseTemp + Math.sin(tickCount * 0.8) * 1.5
-        : Number((baseTemp + Math.sin(tickCount * 0.45) * 0.45 + Math.cos(tickCount * 0.22) * 0.25).toFixed(1));
-      chartTempDataRef.current.push(tempWave);
-      chartTempDataRef.current.shift();
+      if (isStale) {
+        chartTempDataRef.current.push(0);
+        chartTempDataRef.current.shift();
 
-      const rawSmoke = sensorsRef.current.smoke.val;
-      const baseSmoke = typeof rawSmoke === 'number' && !isNaN(rawSmoke) ? rawSmoke : 204;
-      const smokeWave = baseSmoke >= 400
-        ? Math.round(baseSmoke + Math.sin(tickCount * 0.7) * 15)
-        : Math.round(baseSmoke + Math.sin(tickCount * 0.38) * 5.5 + Math.cos(tickCount * 0.18) * 3.2);
-      chartSmokeDataRef.current.push(smokeWave);
-      chartSmokeDataRef.current.shift();
+        chartSmokeDataRef.current.push(0);
+        chartSmokeDataRef.current.shift();
 
-      const flameDetected = sensorsRef.current.flame.detected;
-      const flameWave = flameDetected
-        ? 1.0
-        : Number((0.04 + Math.sin(tickCount * 0.5) * 0.02 + Math.cos(tickCount * 0.25) * 0.01).toFixed(3));
-      chartFlameDataRef.current.push(flameWave);
-      chartFlameDataRef.current.shift();
+        chartFlameDataRef.current.push(0);
+        chartFlameDataRef.current.shift();
+      } else {
+        const rawTemp = sensorsRef.current.temp.val;
+        const tempVal = typeof rawTemp === 'number' && !isNaN(rawTemp) ? rawTemp : 0;
+        chartTempDataRef.current.push(tempVal);
+        chartTempDataRef.current.shift();
+
+        const rawSmoke = sensorsRef.current.smoke.val;
+        const smokeVal = typeof rawSmoke === 'number' && !isNaN(rawSmoke) ? rawSmoke : 0;
+        chartSmokeDataRef.current.push(smokeVal);
+        chartSmokeDataRef.current.shift();
+
+        const flameDetected = sensorsRef.current.flame.detected;
+        chartFlameDataRef.current.push(flameDetected ? 1.0 : 0.0);
+        chartFlameDataRef.current.shift();
+      }
 
       if (dashFlameChartRef.current && dashFlameChartRef.current.data?.datasets?.[0]) {
-        const strokeColor = flameDetected ? '#EF4444' : '#10B981';
+        const strokeColor = isStale ? '#94A3B8' : (sensorsRef.current.flame.detected ? '#EF4444' : '#10B981');
         dashFlameChartRef.current.data.datasets[0].borderColor = strokeColor;
         dashFlameChartRef.current.data.datasets[0].pointBackgroundColor = strokeColor;
       }
       if (flameChartRef.current && flameChartRef.current.data?.datasets?.[0]) {
-        const strokeColor = flameDetected ? '#EF4444' : '#10B981';
+        const strokeColor = isStale ? '#94A3B8' : (sensorsRef.current.flame.detected ? '#EF4444' : '#10B981');
         flameChartRef.current.data.datasets[0].borderColor = strokeColor;
         flameChartRef.current.data.datasets[0].pointBackgroundColor = strokeColor;
       }
@@ -821,23 +817,37 @@ export default function App() {
   const handleTelemetryUpdate = useCallback((data) => {
     if (!data) return;
 
-    lastPacketTimeRef.current = Date.now();
-    setIsDataStale(false);
+    // Check packet freshness against server timestamp
+    const packetTimestamp = data.timestamp || (data.createdAt ? new Date(data.createdAt).getTime() : null);
+    const isLive = packetTimestamp ? (Date.now() - packetTimestamp < 20000) : false;
 
-    const fStatus = data.fireStatus === true;
+    if (isLive) {
+      lastPacketTimeRef.current = Date.now();
+      isDataStaleRef.current = false;
+      setIsDataStale(false);
+    } else {
+      // Historical row from database when device is currently offline
+      lastPacketTimeRef.current = packetTimestamp;
+      isDataStaleRef.current = true;
+      setIsDataStale(true);
+    }
+
+    const fStatus = isLive && data.fireStatus === true;
     const fSeverity = data.fireSeverity || 'CRITICAL';
     setSupabaseFireStatus(fStatus);
     setSupabaseFireSeverity(fSeverity);
 
-    const tempVal = data.temperature;
-    const smokeVal = data.gasValue;
-    const isFlameActive = Boolean(data.flameDetected || data.flameState === 1 || data.flameAlert);
+    const tempVal = isLive ? data.temperature : null;
+    const smokeVal = isLive ? data.gasValue : null;
+    const isFlameActive = isLive && Boolean(data.flameDetected || data.flameState === 1 || data.flameAlert);
     const flameDetected = isFlameActive;
     const rawFlameState = isFlameActive ? 1 : 0;
 
     // Evaluate sensor warnings & limits against ESP32 alerts or thresholds
     let tempStatus = 'UNKNOWN';
-    if (data.temperatureAlert !== undefined && data.temperatureAlert !== null) {
+    if (!isLive) {
+      tempStatus = 'OFFLINE';
+    } else if (data.temperatureAlert !== undefined && data.temperatureAlert !== null) {
       tempStatus = (data.temperatureAlert === true || data.temperatureAlert === 'true' || data.temperatureAlert === 1) ? 'CRITICAL' : (tempVal !== null ? 'SAFE' : 'UNKNOWN');
     } else if (tempVal !== null && tempVal !== undefined) {
       if (tempVal >= thresholds.temp) tempStatus = 'CRITICAL';
@@ -846,7 +856,9 @@ export default function App() {
     }
 
     let smokeStatus = 'UNKNOWN';
-    if (data.gasAlert !== undefined && data.gasAlert !== null) {
+    if (!isLive) {
+      smokeStatus = 'OFFLINE';
+    } else if (data.gasAlert !== undefined && data.gasAlert !== null) {
       smokeStatus = (data.gasAlert === true || data.gasAlert === 'true' || data.gasAlert === 1) ? 'CRITICAL' : (smokeVal !== null ? 'SAFE' : 'UNKNOWN');
     } else if (smokeVal !== null && smokeVal !== undefined) {
       if (smokeVal >= thresholds.smoke) smokeStatus = 'CRITICAL';
@@ -854,24 +866,22 @@ export default function App() {
       else smokeStatus = 'SAFE';
     }
 
-    const flameStatus = isFlameActive ? 'CRITICAL' : 'SAFE';
+    const flameStatus = !isLive ? 'OFFLINE' : (isFlameActive ? 'CRITICAL' : 'SAFE');
 
     // Strict Multi-Sensor AND Validation:
-    // Fire Status is true ONLY when ALL thresholds are achieved simultaneously (Logical AND)
-    // Synchronized with ESP32 firmware ALARM_ACTIVE stage: (temperatureAlert && gasAlert && flameDetected)
-    const tempCritical = tempStatus === 'CRITICAL';
-    const smokeCritical = smokeStatus === 'CRITICAL';
-    const flameCritical = flameStatus === 'CRITICAL';
+    const tempCritical = isLive && tempStatus === 'CRITICAL';
+    const smokeCritical = isLive && smokeStatus === 'CRITICAL';
+    const flameCritical = isLive && flameStatus === 'CRITICAL';
     const allThresholdsAchieved = tempCritical && smokeCritical && flameCritical;
 
     // Fire status is confirmed when ESP32 buzzer is active OR all thresholds achieved OR backend fire status is true
-    const isFireConfirmed = Boolean(data.buzzer || allThresholdsAchieved || fStatus);
+    const isFireConfirmed = isLive && Boolean(data.buzzer || allThresholdsAchieved || fStatus);
 
-    // System state determination: CRITICAL only on confirmed fire (all thresholds) or manual override
+    // System state determination: CRITICAL only on live confirmed fire or manual override
     let maxSeverity = 'SAFE';
-    if (isFireConfirmed || emergencyOverrideRef.current) {
+    if (emergencyOverrideRef.current || isFireConfirmed) {
       maxSeverity = 'CRITICAL';
-    } else if (tempCritical || smokeCritical || flameCritical || tempStatus === 'WARNING' || smokeStatus === 'WARNING') {
+    } else if (isLive && (tempCritical || smokeCritical || flameCritical || tempStatus === 'WARNING' || smokeStatus === 'WARNING')) {
       maxSeverity = 'WARNING';
     }
 
@@ -886,8 +896,8 @@ export default function App() {
       addResponseActionLog('ACTUATOR-ON', 'Automated sprinkler deluge relay opened.');
     }
 
-    const isTempConnected = data.dhtConnected ?? (tempVal !== null && tempVal !== undefined);
-    const isGasConnected = data.gasState ?? (smokeVal !== null && smokeVal !== undefined && smokeVal !== -1);
+    const isTempConnected = isLive && (data.dhtConnected ?? (tempVal !== null && tempVal !== undefined));
+    const isGasConnected = isLive && (data.gasState ?? (smokeVal !== null && smokeVal !== undefined && smokeVal !== -1));
 
     setSensors((prev) => ({
       temp: {
@@ -895,7 +905,7 @@ export default function App() {
         connected: isTempConnected,
         peak: tempVal !== null ? (prev.temp.peak !== null ? Math.max(prev.temp.peak, tempVal) : tempVal) : prev.temp.peak,
         min: tempVal !== null ? (prev.temp.min !== null ? Math.min(prev.temp.min, tempVal) : tempVal) : prev.temp.min,
-        status: isTempConnected ? tempStatus : 'DISCONNECTED',
+        status: isLive ? (isTempConnected ? tempStatus : 'DISCONNECTED') : 'OFFLINE',
         active: isTempConnected
       },
       smoke: {
@@ -903,29 +913,29 @@ export default function App() {
         connected: isGasConnected,
         peak: smokeVal !== null ? (prev.smoke.peak !== null ? Math.max(prev.smoke.peak, smokeVal) : smokeVal) : prev.smoke.peak,
         min: smokeVal !== null ? (prev.smoke.min !== null ? Math.min(prev.smoke.min, smokeVal) : smokeVal) : prev.smoke.min,
-        status: isGasConnected ? smokeStatus : 'DISCONNECTED',
+        status: isLive ? (isGasConnected ? smokeStatus : 'DISCONNECTED') : 'OFFLINE',
         active: isGasConnected
       },
       flame: {
         detected: flameDetected,
         rawState: rawFlameState,
-        connected: true,
-        alert: Boolean(data.flameAlert),
-        status: flameDetected ? 'CRITICAL' : 'SAFE',
-        active: true
+        connected: isLive,
+        alert: isLive ? Boolean(data.flameAlert) : false,
+        status: isLive ? (flameDetected ? 'CRITICAL' : 'SAFE') : 'OFFLINE',
+        active: isLive
       },
       humidity: {
-        val: data.humidity,
-        status: data.humidity !== null ? 'SAFE' : 'UNKNOWN'
+        val: isLive ? data.humidity : null,
+        status: isLive ? (data.humidity !== null ? 'SAFE' : 'UNKNOWN') : 'OFFLINE'
       }
     }));
 
     setBackendHealth({
-      deviceOnline: Boolean(data.deviceOnline),
-      temperatureSensor: Boolean(data.temperatureSensor),
-      smokeSensor: Boolean(data.smokeSensor),
-      flameSensor: true,
-      wifiConnected: Boolean(data.wifiConnected),
+      deviceOnline: isLive,
+      temperatureSensor: isTempConnected,
+      smokeSensor: isGasConnected,
+      flameSensor: isLive,
+      wifiConnected: isLive,
       pumpStatus: Boolean(data.pumpStatus),
       cameraStatus: data.cameraStatus || 'offline'
     });
@@ -1003,9 +1013,12 @@ export default function App() {
 
       if (lastPacketTimeRef.current !== null) {
         const diffSeconds = (now - lastPacketTimeRef.current) / 1000;
-        setIsDataStale(diffSeconds > 30);
+        const stale = diffSeconds > 15;
+        setIsDataStale(stale);
+        isDataStaleRef.current = stale;
       } else {
         setIsDataStale(true);
+        isDataStaleRef.current = true;
       }
     }, 1000);
 
@@ -1490,24 +1503,26 @@ export default function App() {
               <div className="enterprise-card hero-sensor-card hero-temp-card">
                 <div className="hero-card-header">
                   <div className="hero-chip-group">
-                    <span className="hero-chip chip-orange">DHT22</span>
+                    <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-orange'}`}>DHT22</span>
                     <span className="hero-chip-sub">Digital Thermistor (GPIO 4)</span>
                   </div>
-                  <div className="hero-icon-box box-orange">🌡️</div>
+                  <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-orange'}`}>🌡️</div>
                 </div>
                 <div className="hero-sensor-title">Ambient Temperature</div>
                 <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${sensors.temp.val === null ? 'is-disconnected' : ''}`}>{safeFormatTemp(sensors.temp.val)}</span>
-                  <span className={`hero-pill-hw ${sensors.temp.connected && !isDataStale ? 'hw-connected' : 'hw-disconnected'}`}>
-                    <span className={`status-dot-sm ${sensors.temp.connected && !isDataStale ? 'connected' : 'disconnected'}`}></span>
-                    {sensors.temp.connected && !isDataStale ? 'Hardware Connected' : 'Hardware Disconnected'}
+                  <span className={`hero-reading-value ${isDataStale || sensors.temp.val === null ? 'is-disconnected' : ''}`}>
+                    {isDataStale || sensors.temp.val === null ? '--.- °C' : safeFormatTemp(sensors.temp.val)}
+                  </span>
+                  <span className={`hero-pill-hw ${!isDataStale && sensors.temp.connected ? 'hw-connected' : 'hw-offline'}`}>
+                    <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? 'connected' : 'offline'}`}></span>
+                    {!isDataStale && sensors.temp.connected ? 'Hardware Connected' : 'Hardware Offline'}
                   </span>
                 </div>
                 <div className="hero-status-row">
                   <div className="hero-status-left">
-                    <span className={`status-dot-sm ${sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'connected' : 'disconnected') : 'disconnected'}`}></span>
-                    <span className="hero-status-text">
-                      {sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Hardware Disconnected (null)'}
+                    <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
+                    <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
+                      {isDataStale ? 'Device Offline / Standby' : (sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Hardware Disconnected')}
                     </span>
                   </div>
                   <span className="hero-limit-text">Limit: Baseline +2.0°C</span>
@@ -1517,7 +1532,10 @@ export default function App() {
                 </div>
                 <div className="hero-card-footer">
                   <span>-60s</span>
-                  <span className="footer-mid"><span className="pulse-indicator-dot pulse-orange"></span> LIVE 1.0Hz SAMPLING</span>
+                  <span className="footer-mid">
+                    <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-orange'}`}></span>
+                    {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'LIVE 1.0Hz SAMPLING'}
+                  </span>
                   <span>NOW</span>
                 </div>
               </div>
@@ -1526,24 +1544,26 @@ export default function App() {
               <div className="enterprise-card hero-sensor-card hero-smoke-card">
                 <div className="hero-card-header">
                   <div className="hero-chip-group">
-                    <span className="hero-chip chip-purple">MQ-2</span>
+                    <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-purple'}`}>MQ-2</span>
                     <span className="hero-chip-sub">Combustible Gas &amp; Smoke (GPIO 5)</span>
                   </div>
-                  <div className="hero-icon-box box-purple">💨</div>
+                  <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-purple'}`}>💨</div>
                 </div>
                 <div className="hero-sensor-title">Gas / Smoke Concentration</div>
                 <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${sensors.smoke.val === null ? 'is-disconnected' : ''}`}>{safeFormatSmoke(sensors.smoke.val)}</span>
-                  <span className={`hero-pill-hw ${sensors.smoke.connected && !isDataStale ? 'hw-connected' : 'hw-disconnected'}`}>
-                    <span className={`status-dot-sm ${sensors.smoke.connected && !isDataStale ? 'connected' : 'disconnected'}`}></span>
-                    {sensors.smoke.connected && !isDataStale ? 'Hardware Connected' : 'Hardware Disconnected'}
+                  <span className={`hero-reading-value ${isDataStale || sensors.smoke.val === null ? 'is-disconnected' : ''}`}>
+                    {isDataStale || sensors.smoke.val === null ? '-- PPM' : safeFormatSmoke(sensors.smoke.val)}
+                  </span>
+                  <span className={`hero-pill-hw ${!isDataStale && sensors.smoke.connected ? 'hw-connected' : 'hw-offline'}`}>
+                    <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? 'connected' : 'offline'}`}></span>
+                    {!isDataStale && sensors.smoke.connected ? 'Hardware Connected' : 'Hardware Offline'}
                   </span>
                 </div>
                 <div className="hero-status-row">
                   <div className="hero-status-left">
-                    <span className={`status-dot-sm ${sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'connected' : 'disconnected') : 'disconnected'}`}></span>
-                    <span className="hero-status-text">
-                      {sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Signal Unavailable / Disconnected'}
+                    <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
+                    <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
+                      {isDataStale ? 'Device Offline / Standby' : (sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Signal Unavailable / Disconnected')}
                     </span>
                   </div>
                   <span className="hero-limit-text">Trigger: Baseline +150</span>
@@ -1553,37 +1573,40 @@ export default function App() {
                 </div>
                 <div className="hero-card-footer">
                   <span>-60s</span>
-                  <span className="footer-mid"><span className="pulse-indicator-dot pulse-purple"></span> PPM: 12-BIT RES</span>
+                  <span className="footer-mid">
+                    <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-purple'}`}></span>
+                    {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'PPM: 12-BIT RES'}
+                  </span>
                   <span>NOW</span>
                 </div>
               </div>
 
               {/* Card 3: Optical Flame Sensor */}
-              <div className={`enterprise-card hero-sensor-card hero-flame-card ${sensors.flame.detected ? 'card-flame-critical' : ''}`}>
+              <div className={`enterprise-card hero-sensor-card hero-flame-card ${!isDataStale && sensors.flame.detected ? 'card-flame-critical' : ''}`}>
                 <div className="hero-card-header">
                   <div className="hero-chip-group">
-                    <span className={`hero-chip ${sensors.flame.detected ? 'chip-red' : 'chip-green'}`}>
-                      {sensors.flame.detected ? 'CRITICAL' : 'DIGITAL IR'}
+                    <span className={`hero-chip ${isDataStale ? 'chip-offline' : (sensors.flame.detected ? 'chip-red' : 'chip-green')}`}>
+                      {isDataStale ? 'OFFLINE' : (sensors.flame.detected ? 'CRITICAL' : 'DIGITAL IR')}
                     </span>
                     <span className="hero-chip-sub">Active-Low Flame Sensor (GPIO 6)</span>
                   </div>
-                  <div className={`hero-icon-box ${sensors.flame.detected ? 'box-red' : 'box-green'}`}>🔥</div>
+                  <div className={`hero-icon-box ${isDataStale ? 'box-offline' : (sensors.flame.detected ? 'box-red' : 'box-green')}`}>🔥</div>
                 </div>
                 <div className="hero-sensor-title">Optical Flame Sensor</div>
                 <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe'}`}>
-                    {sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)'}
+                  <span className={`hero-reading-value ${isDataStale ? 'val-flame-offline' : (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe')}`}>
+                    {isDataStale ? 'OFFLINE ( -- )' : (sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)')}
                   </span>
-                  <span className={`hero-pill-hw ${sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected'}`}>
-                    <span className={`status-dot-sm ${sensors.flame.detected ? 'disconnected pulse-dot' : 'connected'}`}></span>
-                    {sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected'}
+                  <span className={`hero-pill-hw ${isDataStale ? 'hw-offline' : (sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected')}`}>
+                    <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected pulse-dot' : 'connected')}`}></span>
+                    {isDataStale ? 'Hardware Offline' : (sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected')}
                   </span>
                 </div>
                 <div className="hero-status-row">
                   <div className="hero-status-left">
-                    <span className={`status-dot-sm ${sensors.flame.detected ? 'disconnected' : 'connected'}`}></span>
-                    <span className="hero-status-text" style={{ color: sensors.flame.detected ? '#DC2626' : '#047857', fontWeight: sensors.flame.detected ? 700 : 600 }}>
-                      {sensors.flame.detected ? 'CRITICAL: FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)'}
+                    <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected' : 'connected')}`}></span>
+                    <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : (sensors.flame.detected ? '#DC2626' : '#047857'), fontWeight: !isDataStale && sensors.flame.detected ? 700 : 600 }}>
+                      {isDataStale ? 'Device Offline / Standby' : (sensors.flame.detected ? 'CRITICAL: FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)')}
                     </span>
                   </div>
                   <span className="hero-limit-text">Active: LOW (0V)</span>
@@ -1594,8 +1617,8 @@ export default function App() {
                 <div className="hero-card-footer">
                   <span>SAFE (0)</span>
                   <span className="footer-mid">
-                    <span className={`pulse-indicator-dot ${sensors.flame.detected ? 'pulse-red' : 'pulse-green'}`}></span>
-                    {sensors.flame.detected ? 'CRITICAL FLAME ACTIVE' : 'ACTIVE OPTICAL'}
+                    <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : (sensors.flame.detected ? 'pulse-red' : 'pulse-green')}`}></span>
+                    {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : (sensors.flame.detected ? 'CRITICAL FLAME ACTIVE' : 'ACTIVE OPTICAL')}
                   </span>
                   <span>FLAME (1)</span>
                 </div>
