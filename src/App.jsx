@@ -94,10 +94,10 @@ export default function App() {
     humidity: { val: null, status: 'UNKNOWN' }
   });
 
-  // Thresholds (strictly preserved)
+  // Thresholds
   const thresholds = {
-    temp: 60.0,
-    smoke: 1638,
+    temp: 20.0,
+    smoke: 800,
     flame: 1.50
   };
 
@@ -1525,7 +1525,7 @@ export default function App() {
                       {isDataStale ? 'Device Offline / Standby' : (sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Hardware Disconnected')}
                     </span>
                   </div>
-                  <span className="hero-limit-text">Limit: Baseline +2.0°C</span>
+                  <span className="hero-limit-text">Limit: 20°C (Baseline +2.0°C)</span>
                 </div>
                 <div className="hero-chart-container">
                   <canvas ref={dashTempCanvasRef} id="dashTempDetailChart"></canvas>
@@ -1566,7 +1566,7 @@ export default function App() {
                       {isDataStale ? 'Device Offline / Standby' : (sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Signal Unavailable / Disconnected')}
                     </span>
                   </div>
-                  <span className="hero-limit-text">Trigger: Baseline +150</span>
+                  <span className="hero-limit-text">Trigger: 800 ADC (Baseline +150)</span>
                 </div>
                 <div className="hero-chart-container">
                   <canvas ref={dashSmokeCanvasRef} id="dashSmokeDetailChart"></canvas>

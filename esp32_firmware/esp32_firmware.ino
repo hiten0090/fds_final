@@ -51,6 +51,8 @@ const unsigned long WIFI_CHECK_INTERVAL  = 8000;   // Reconnect attempt interval
 const unsigned long CALIBRATION_DURATION = 15000;  // 15 seconds warm-up / baseline acquisition
 
 // Dynamic safety thresholds above steady-state baseline
+const float TEMP_CRITICAL_LIMIT  = 20.0;   // Critical alert when Temp >= 20.0 °C
+const int   GAS_CRITICAL_LIMIT   = 800;    // Critical alert when Gas/Smoke >= 800 ADC
 const float TEMP_SPIKE_THRESHOLD = 2.0;    // Baseline + 2.0 °C indicates rapid heat rise
 const int   GAS_SPIKE_THRESHOLD  = 150;    // Baseline + 150 ADC indicates smoke accumulation
 const int   MQ2_MIN_VALID_SIGNAL = 35;     // Disconnection check threshold for MQ-2
@@ -190,23 +192,23 @@ void processBaseline() {
 // 8. MULTI-SENSOR FIRE DETECTION & ALARM CONTROLLER
 // =============================================================================
 void evaluateFireSafety() {
-  // 1. Temperature Alert Assessment
+  // 1. Temperature Alert Assessment: Critical if >= 20.0 °C OR (Baseline + 2.0 °C)
   if (dhtConnected && !isnan(temperature)) {
-    float threshold = baselineReady ? (tempBaseline + TEMP_SPIKE_THRESHOLD) : 55.0;
-    temperatureAlert = (temperature >= threshold);
+    temperatureAlert = (temperature >= TEMP_CRITICAL_LIMIT) ||
+                       (baselineReady && (temperature >= (tempBaseline + TEMP_SPIKE_THRESHOLD)));
   } else {
     temperatureAlert = false;
   }
 
-  // 2. Gas / Smoke Alert Assessment
+  // 2. Gas / Smoke Alert Assessment: Critical if >= 800 ADC OR (Baseline + 150 ADC)
   if (gasConnected && gasValue > 0) {
-    int threshold = baselineReady ? (gasBaseline + GAS_SPIKE_THRESHOLD) : 1600;
-    gasAlert = (gasValue >= threshold);
+    gasAlert = (gasValue >= GAS_CRITICAL_LIMIT) ||
+               (baselineReady && (gasValue >= (gasBaseline + GAS_SPIKE_THRESHOLD)));
   } else {
     gasAlert = false;
   }
 
-  // 3. Flame Alert Assessment (Instant Optical IR response)
+  // 3. Flame Alert Assessment: Instant Optical IR response (Pin 6 LOW = Fire)
   flameAlert = flameDetected;
 
   // 4. Multi-Condition Alarm Verification:
