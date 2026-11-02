@@ -17,7 +17,7 @@ const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5
 const DEFAULT_RELAY_STREAM_URL = `${BACKEND_BASE_URL}/camera/stream`;
 
 const safeFormatTemp = (val) => (typeof val === 'number' && !isNaN(val) ? `${val.toFixed(1)} °C` : 'DISCONNECTED');
-const safeFormatSmoke = (val) => (typeof val === 'number' && !isNaN(val) ? `${val.toFixed(0)} ADC` : 'DISCONNECTED');
+const safeFormatSmoke = (val) => (typeof val === 'number' && !isNaN(val) ? `${val.toFixed(0)} PPM` : 'DISCONNECTED');
 const safeFormatHumidity = (val) => (typeof val === 'number' && !isNaN(val) ? `${val.toFixed(0)} %` : 'EXCLUDED');
 
 export default function App() {
@@ -90,7 +90,7 @@ export default function App() {
   const [sensors, setSensors] = useState({
     temp: { val: null, peak: null, min: null, status: 'UNKNOWN', active: false },
     smoke: { val: null, peak: null, min: null, status: 'UNKNOWN', active: false },
-    flame: { detected: false, rawState: null, status: 'UNKNOWN', active: false },
+    flame: { detected: false, rawState: 0, status: 'SAFE', active: true, connected: true },
     humidity: { val: null, status: 'UNKNOWN' }
   });
 
@@ -173,6 +173,86 @@ export default function App() {
   useEffect(() => { sprinklerActiveRef.current = sprinklerActive; }, [sprinklerActive]);
   useEffect(() => { emergencyOverrideRef.current = emergencyOverride; }, [emergencyOverride]);
   useEffect(() => { systemStateRef.current = systemState; }, [systemState]);
+
+  // Scroll reveal observer: smoothly brings tiles up on scroll and when navigating tabs
+  useEffect(() => {
+    const tileSelector = '.enterprise-card, .hero-sensor-card, .camera-feed-card, .facility-location-card, .sensor-detail-card, .sms-alert-card, .controls-panel, .incident-card-enterprise, .audit-logs-card, .dedicated-camera-card, .settings-diagnostics-card, .backend-data-table-card';
+
+    // When tab changes, reset tiles inside inactive sections so they animate up when visited
+    const allTiles = document.querySelectorAll(tileSelector);
+    allTiles.forEach((tile) => {
+      const parentSection = tile.closest('.page-section');
+      if (parentSection && !parentSection.classList.contains('active')) {
+        tile.classList.remove('tile-visible');
+      }
+    });
+
+    const updateTileVisibility = () => {
+      const activeSection = document.querySelector('.page-section.active');
+      if (!activeSection) return;
+
+      const activeTiles = activeSection.querySelectorAll(tileSelector);
+      const windowHeight = window.innerHeight;
+
+      activeTiles.forEach((tile) => {
+        const rect = tile.getBoundingClientRect();
+        // Skip hidden elements
+        if (rect.width === 0 && rect.height === 0) return;
+
+        // Reveal tile as soon as its top boundary enters the viewport
+        if (rect.top <= windowHeight - 15 && rect.bottom >= 0) {
+          tile.classList.add('tile-visible');
+        } else if (rect.top > windowHeight + 120) {
+          // Retain visibility until pushed completely below viewport
+          tile.classList.remove('tile-visible');
+        }
+      });
+    };
+
+    // Staggered reveals on tab change & initial mount
+    updateTileVisibility();
+    const timer1 = setTimeout(updateTileVisibility, 40);
+    const timer2 = setTimeout(updateTileVisibility, 140);
+    const timer3 = setTimeout(updateTileVisibility, 320);
+
+    let observer;
+    if (typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('tile-visible');
+            } else if (entry.boundingClientRect.top > window.innerHeight + 120) {
+              entry.target.classList.remove('tile-visible');
+            }
+          });
+        },
+        {
+          root: null,
+          threshold: 0.05,
+          rootMargin: '40px 0px 40px 0px'
+        }
+      );
+
+      const activeSection = document.querySelector('.page-section.active');
+      if (activeSection) {
+        const activeTiles = activeSection.querySelectorAll(tileSelector);
+        activeTiles.forEach((tile) => observer.observe(tile));
+      }
+    }
+
+    window.addEventListener('scroll', updateTileVisibility, { passive: true });
+    window.addEventListener('resize', updateTileVisibility, { passive: true });
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      window.removeEventListener('scroll', updateTileVisibility);
+      window.removeEventListener('resize', updateTileVisibility);
+      if (observer) observer.disconnect();
+    };
+  }, [currentTab]);
 
   // Overall Emergency State computed (Condition: Supabase confirmed fire OR Manual Override OR CRITICAL sensor limits)
   const isFireActive = supabaseFireStatus || emergencyOverride || (systemState === 'CRITICAL');
@@ -467,6 +547,101 @@ export default function App() {
       }
     });
 
+    const fullChartOptions = (suggestedMin, suggestedMax, unit = '', axisTitle = '', isBinary = false) => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#0F172A',
+          titleColor: '#94A3B8',
+          bodyColor: '#F8FAFC',
+          titleFont: { family: "'Space Grotesk', 'Outfit', sans-serif", size: 11, weight: '700' },
+          bodyFont: { family: "'JetBrains Mono', monospace", size: 13, weight: '700' },
+          padding: 10,
+          boxPadding: 6,
+          cornerRadius: 8,
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 1,
+          displayColors: false,
+          callbacks: {
+            title: (items) => items[0]?.label ? `Time: ${items[0].label}` : 'Live Telemetry',
+            label: (ctx) => {
+              if (isBinary) {
+                return `Flame State: ${ctx.parsed.y >= 0.5 ? '🔥 1 (FLAME DETECTED)' : '🛡️ 0 (SAFE / CLEAR)'}`;
+              }
+              return `Reading: ${ctx.parsed.y}${unit ? ' ' + unit : ''}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          display: true,
+          grid: {
+            display: true,
+            color: 'rgba(226, 232, 240, 0.7)',
+            lineWidth: 1,
+            drawBorder: false
+          },
+          ticks: {
+            display: true,
+            color: '#64748B',
+            font: { family: "'JetBrains Mono', monospace", size: 11, weight: '500' },
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 12
+          },
+          title: {
+            display: true,
+            text: 'Timeline (HH:MM:SS)',
+            color: '#475569',
+            font: { family: "'Space Grotesk', 'Outfit', sans-serif", size: 12, weight: '700' },
+            padding: { top: 8, bottom: 2 }
+          }
+        },
+        y: {
+          display: true,
+          suggestedMin,
+          suggestedMax,
+          grid: {
+            display: true,
+            color: 'rgba(226, 232, 240, 0.85)',
+            lineWidth: 1,
+            drawBorder: false
+          },
+          ticks: {
+            display: true,
+            color: '#334155',
+            font: { family: "'JetBrains Mono', monospace", size: 11.5, weight: '600' },
+            padding: 10,
+            stepSize: isBinary ? 1 : undefined,
+            callback: function(value) {
+              if (isBinary) {
+                if (value === 0) return '0 (Safe)';
+                if (value === 1) return '1 (Flame)';
+                return '';
+              }
+              return unit ? `${value} ${unit}` : value;
+            }
+          },
+          title: {
+            display: true,
+            text: axisTitle || (unit ? `Unit: ${unit}` : 'Sensor Value'),
+            color: '#1E293B',
+            font: { family: "'Space Grotesk', 'Outfit', sans-serif", size: 12, weight: '700' },
+            padding: { top: 2, bottom: 8 }
+          }
+        }
+      }
+    });
+
     const createGradientDataset = (data, borderColor, colorStart, colorEnd, pointColor) => ({
       data,
       borderColor,
@@ -505,7 +680,7 @@ export default function App() {
           labels: chartLabelsRef.current,
           datasets: [createGradientDataset(chartTempDataRef.current, '#F97316', 'rgba(249, 115, 22, 0.38)', 'rgba(249, 115, 22, 0.08)', '#F97316')]
         },
-        options: detailOptions(18, 38, '°C')
+        options: fullChartOptions(18, 42, '°C', 'Ambient Temperature (°C)')
       });
     }
 
@@ -529,7 +704,7 @@ export default function App() {
           labels: chartLabelsRef.current,
           datasets: [createGradientDataset(chartSmokeDataRef.current, '#8B5CF6', 'rgba(139, 92, 246, 0.38)', 'rgba(139, 92, 246, 0.08)', '#8B5CF6')]
         },
-        options: detailOptions(120, 320, 'PPM')
+        options: fullChartOptions(100, 3600, 'PPM', 'Smoke / Gas Concentration (PPM)')
       });
     }
 
@@ -553,7 +728,7 @@ export default function App() {
           labels: chartLabelsRef.current,
           datasets: [createGradientDataset(chartFlameDataRef.current, '#10B981', 'rgba(16, 185, 129, 0.38)', 'rgba(16, 185, 129, 0.08)', '#10B981')]
         },
-        options: detailOptions(-0.25, 1.35, '')
+        options: fullChartOptions(-0.2, 1.25, '', 'Flame State (0 = Safe, 1 = Fire)', true)
       });
     }
 
@@ -613,6 +788,17 @@ export default function App() {
       chartFlameDataRef.current.push(flameWave);
       chartFlameDataRef.current.shift();
 
+      if (dashFlameChartRef.current && dashFlameChartRef.current.data?.datasets?.[0]) {
+        const strokeColor = flameDetected ? '#EF4444' : '#10B981';
+        dashFlameChartRef.current.data.datasets[0].borderColor = strokeColor;
+        dashFlameChartRef.current.data.datasets[0].pointBackgroundColor = strokeColor;
+      }
+      if (flameChartRef.current && flameChartRef.current.data?.datasets?.[0]) {
+        const strokeColor = flameDetected ? '#EF4444' : '#10B981';
+        flameChartRef.current.data.datasets[0].borderColor = strokeColor;
+        flameChartRef.current.data.datasets[0].pointBackgroundColor = strokeColor;
+      }
+
       if (currentTabRef.current === 'overview' || currentTabRef.current === 'live') {
         if (mainChartRef.current) mainChartRef.current.update('none');
         if (dashTempChartRef.current) dashTempChartRef.current.update('none');
@@ -645,13 +831,14 @@ export default function App() {
 
     const tempVal = data.temperature;
     const smokeVal = data.gasValue;
-    const flameDetected = data.flameDetected;
-    const rawFlameState = data.flameState;
+    const isFlameActive = Boolean(data.flameDetected || data.flameState === 1 || data.flameAlert);
+    const flameDetected = isFlameActive;
+    const rawFlameState = isFlameActive ? 1 : 0;
 
     // Evaluate sensor warnings & limits against ESP32 alerts or thresholds
     let tempStatus = 'UNKNOWN';
-    if (data.temperatureAlert !== undefined) {
-      tempStatus = data.temperatureAlert ? 'CRITICAL' : (tempVal !== null ? 'SAFE' : 'UNKNOWN');
+    if (data.temperatureAlert !== undefined && data.temperatureAlert !== null) {
+      tempStatus = (data.temperatureAlert === true || data.temperatureAlert === 'true' || data.temperatureAlert === 1) ? 'CRITICAL' : (tempVal !== null ? 'SAFE' : 'UNKNOWN');
     } else if (tempVal !== null && tempVal !== undefined) {
       if (tempVal >= thresholds.temp) tempStatus = 'CRITICAL';
       else if (tempVal >= thresholds.temp * 0.75) tempStatus = 'WARNING';
@@ -659,20 +846,15 @@ export default function App() {
     }
 
     let smokeStatus = 'UNKNOWN';
-    if (data.gasAlert !== undefined) {
-      smokeStatus = data.gasAlert ? 'CRITICAL' : (smokeVal !== null ? 'SAFE' : 'UNKNOWN');
+    if (data.gasAlert !== undefined && data.gasAlert !== null) {
+      smokeStatus = (data.gasAlert === true || data.gasAlert === 'true' || data.gasAlert === 1) ? 'CRITICAL' : (smokeVal !== null ? 'SAFE' : 'UNKNOWN');
     } else if (smokeVal !== null && smokeVal !== undefined) {
       if (smokeVal >= thresholds.smoke) smokeStatus = 'CRITICAL';
       else if (smokeVal >= thresholds.smoke * 0.75) smokeStatus = 'WARNING';
       else smokeStatus = 'SAFE';
     }
 
-    let flameStatus = 'UNKNOWN';
-    if (data.flameAlert !== undefined) {
-      flameStatus = data.flameAlert ? 'CRITICAL' : 'SAFE';
-    } else if (rawFlameState !== null || flameDetected !== undefined) {
-      flameStatus = flameDetected ? 'CRITICAL' : 'SAFE';
-    }
+    const flameStatus = isFlameActive ? 'CRITICAL' : 'SAFE';
 
     // Strict Multi-Sensor AND Validation:
     // Fire Status is true ONLY when ALL thresholds are achieved simultaneously (Logical AND)
@@ -727,10 +909,10 @@ export default function App() {
       flame: {
         detected: flameDetected,
         rawState: rawFlameState,
-        connected: data.flameSensorConnected ?? true,
+        connected: true,
         alert: Boolean(data.flameAlert),
-        status: (data.flameSensorConnected === false) ? 'DISCONNECTED' : flameStatus,
-        active: Boolean(data.flameSensorConnected ?? true)
+        status: flameDetected ? 'CRITICAL' : 'SAFE',
+        active: true
       },
       humidity: {
         val: data.humidity,
@@ -742,7 +924,7 @@ export default function App() {
       deviceOnline: Boolean(data.deviceOnline),
       temperatureSensor: Boolean(data.temperatureSensor),
       smokeSensor: Boolean(data.smokeSensor),
-      flameSensor: Boolean(data.flameSensor),
+      flameSensor: true,
       wifiConnected: Boolean(data.wifiConnected),
       pumpStatus: Boolean(data.pumpStatus),
       cameraStatus: data.cameraStatus || 'offline'
@@ -960,6 +1142,7 @@ export default function App() {
   const switchTab = (tabId) => {
     setCurrentTab(tabId);
     setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
       if ((tabId === 'overview' || tabId === 'live')) {
         if (mainChartRef.current) { mainChartRef.current.resize(); mainChartRef.current.update(); }
@@ -1138,6 +1321,7 @@ export default function App() {
             <button
               className={`sidebar-btn ${currentTab === 'overview' ? 'active' : ''}`}
               onClick={() => switchTab('overview')}
+              data-nav="overview"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="9" rx="1"></rect>
@@ -1145,7 +1329,7 @@ export default function App() {
                 <rect x="14" y="12" width="7" height="9" rx="1"></rect>
                 <rect x="3" y="16" width="7" height="5" rx="1"></rect>
               </svg>
-              <span>Overview</span>
+              <span className="sidebar-btn-label">Overview</span>
             </button>
           </li>
 
@@ -1153,14 +1337,16 @@ export default function App() {
             <button
               className={`sidebar-btn ${currentTab === 'camera' ? 'active' : ''}`}
               onClick={() => switchTab('camera')}
+              data-nav="camera"
               title="Camera Surveillance • ESP32-CAM Relay"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M23 7l-7 5 7 5V7z"></path>
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
               </svg>
-              <span>Camera Surveillance</span>
-              <span className="sidebar-badge" style={{ backgroundColor: cameraState === 'Live' ? '#16A34A' : isFireActive ? '#DC2626' : '#64748B' }}>
+              <span className="sidebar-btn-label">Camera Surveillance</span>
+              <span className={`sidebar-badge ${cameraState === 'Live' ? 'badge-camera-live' : isFireActive ? 'badge-camera-alert' : 'badge-camera-stby'}`}>
+                {cameraState === 'Live' && <span className="sidebar-badge-pulse" />}
                 {cameraState === 'Live' ? 'LIVE' : isFireActive ? 'ALERT' : 'STBY'}
               </span>
             </button>
@@ -1170,12 +1356,13 @@ export default function App() {
             <button
               className={`sidebar-btn ${currentTab === 'sensors' ? 'active' : ''}`}
               onClick={() => switchTab('sensors')}
+              data-nav="sensors"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 3v18h18"></path>
                 <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
               </svg>
-              <span>Sensor Analytics</span>
+              <span className="sidebar-btn-label">Sensor Analytics</span>
             </button>
           </li>
 
@@ -1183,13 +1370,14 @@ export default function App() {
             <button
               className={`sidebar-btn ${currentTab === 'history' ? 'active' : ''}`}
               onClick={() => switchTab('history')}
+              data-nav="history"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 8v4l3 3"></path>
                 <circle cx="12" cy="12" r="9"></circle>
               </svg>
-              <span>Event History</span>
-              <span className="sidebar-badge" style={{ backgroundColor: 'var(--primary-blue)' }}>{incidents.length}</span>
+              <span className="sidebar-btn-label">Event History</span>
+              <span className="sidebar-badge badge-event-count">{incidents.length}</span>
             </button>
           </li>
 
@@ -1197,29 +1385,41 @@ export default function App() {
             <button
               className={`sidebar-btn ${currentTab === 'settings' ? 'active' : ''}`}
               onClick={() => switchTab('settings')}
+              data-nav="settings"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
-              <span>Settings</span>
+              <span className="sidebar-btn-label">Settings</span>
             </button>
           </li>
         </ul>
 
-        {/* Commander Profile Card */}
-        <div className="sidebar-commander-section">
-          <div className="sidebar-commander-card">
-            <div className="commander-avatar">VS</div>
-            <div className="commander-info">
-              <div className="commander-name">Eng. Vikram Sharma</div>
-              <div className="commander-role">Lvl 3 Incident Commander</div>
-              <div className="commander-shift">SHIFT: 04h 22m Elapsed</div>
+        {/* Project Credits Card */}
+        <div className="sidebar-credits-section">
+          <div className="sidebar-credits-card">
+            <div className="credits-badge-row">
+              <span className="credits-badge">MADE BY</span>
             </div>
-          </div>
-          <div className="sidebar-commander-footer">
-            <span><span className="status-dot-sm connected"></span> Supabase RS</span>
-            <span><span className="status-dot-sm connected"></span> 99.9% SYNC</span>
+            <div className="credits-team-grid">
+              <div className="credits-member" title="Lakshay Jain">
+                <span className="credits-initials">LJ</span>
+                <span className="credits-name">Lakshay Jain</span>
+              </div>
+              <div className="credits-member" title="Arnav Jain">
+                <span className="credits-initials">AJ</span>
+                <span className="credits-name">Arnav Jain</span>
+              </div>
+              <div className="credits-member" title="Hiten Shah">
+                <span className="credits-initials">HS</span>
+                <span className="credits-name">Hiten Shah</span>
+              </div>
+              <div className="credits-member" title="Bhavye Sani">
+                <span className="credits-initials">BS</span>
+                <span className="credits-name">Bhavye Sani</span>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -1238,24 +1438,14 @@ export default function App() {
         {/* Top Header Bar */}
         <header className="top-header">
           <div className="header-left">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button
-                className="header-icon-btn mobile-menu-btn"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                aria-label="Toggle navigation menu"
-              >
-                ☰
-              </button>
+            <div className="header-branding">
+              <div className="header-icon-badge">
+                <span className="header-fire-icon">🔥</span>
+              </div>
               <h1 className="header-title">Fire Safety Control Center</h1>
-            </div>
-            <div className="header-meta-row">
-              <span className="header-meta-item">Zone 4B • Industrial Fab Plant</span>
-              <span className="header-meta-item">Shift Alpha (Supervisor: V. Sharma)</span>
-              <span className="header-badge-pill pill-blue">LIVE TELEMETRY</span>
-              <span className="header-badge-pill pill-green">EN-54 CERTIFIED</span>
-              <span className="header-meta-item header-encrypted-stream">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                TLS Encrypted Stream
+              <span className="header-live-status-pill">
+                <span className="live-status-dot"></span>
+                LIVE
               </span>
             </div>
           </div>
@@ -1263,32 +1453,10 @@ export default function App() {
           <div className="header-right">
             {/* Real-time Time & Date Pill */}
             <div className="header-time-pill">
+              <span className="header-time-icon">🕒</span>
               <span className="header-time">{timeStr}</span>
               <span className="header-dot">•</span>
               <span className="header-date">{dateStr}</span>
-            </div>
-
-            {/* Export Audit PDF */}
-            <button
-              className="header-action-btn"
-              onClick={() => window.print()}
-              title="Export Incident Audit PDF"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Export Audit PDF</span>
-            </button>
-
-            {/* Verified System Status Indicator */}
-            <div
-              className={`system-status-pill ${verifiedStatusMode}`}
-              title="Verified Real-time Safety Matrix Status"
-            >
-              <span className={`status-dot-indicator ${verifiedStatusMode}`}></span>
-              <span>{isFireActive ? 'CRITICAL ALERT' : 'System Operational'}</span>
             </div>
 
             {/* Siren Armed Button */}
@@ -1297,17 +1465,12 @@ export default function App() {
               className={`header-action-btn siren-btn ${audioState.isUnlocked ? 'armed' : 'unarmed'}`}
               title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to enable siren audio in browser'}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
               </svg>
               <span>{audioState.isUnlocked ? 'Siren Armed' : 'Enable Siren'}</span>
             </button>
-
-            {/* Profile Avatar */}
-            <div className="header-avatar" title="Fire Safety Watch Officer">
-              <span>FG</span>
-            </div>
           </div>
         </header>
 
@@ -1334,7 +1497,7 @@ export default function App() {
                 </div>
                 <div className="hero-sensor-title">Ambient Temperature</div>
                 <div className="hero-reading-row">
-                  <span className="hero-reading-value">{safeFormatTemp(sensors.temp.val)}</span>
+                  <span className={`hero-reading-value ${sensors.temp.val === null ? 'is-disconnected' : ''}`}>{safeFormatTemp(sensors.temp.val)}</span>
                   <span className={`hero-pill-hw ${sensors.temp.connected && !isDataStale ? 'hw-connected' : 'hw-disconnected'}`}>
                     <span className={`status-dot-sm ${sensors.temp.connected && !isDataStale ? 'connected' : 'disconnected'}`}></span>
                     {sensors.temp.connected && !isDataStale ? 'Hardware Connected' : 'Hardware Disconnected'}
@@ -1370,7 +1533,7 @@ export default function App() {
                 </div>
                 <div className="hero-sensor-title">Gas / Smoke Concentration</div>
                 <div className="hero-reading-row">
-                  <span className="hero-reading-value">{safeFormatSmoke(sensors.smoke.val)}</span>
+                  <span className={`hero-reading-value ${sensors.smoke.val === null ? 'is-disconnected' : ''}`}>{safeFormatSmoke(sensors.smoke.val)}</span>
                   <span className={`hero-pill-hw ${sensors.smoke.connected && !isDataStale ? 'hw-connected' : 'hw-disconnected'}`}>
                     <span className={`status-dot-sm ${sensors.smoke.connected && !isDataStale ? 'connected' : 'disconnected'}`}></span>
                     {sensors.smoke.connected && !isDataStale ? 'Hardware Connected' : 'Hardware Disconnected'}
@@ -1390,39 +1553,37 @@ export default function App() {
                 </div>
                 <div className="hero-card-footer">
                   <span>-60s</span>
-                  <span className="footer-mid"><span className="pulse-indicator-dot pulse-purple"></span> ADC: 12-BIT RES</span>
+                  <span className="footer-mid"><span className="pulse-indicator-dot pulse-purple"></span> PPM: 12-BIT RES</span>
                   <span>NOW</span>
                 </div>
               </div>
 
               {/* Card 3: Optical Flame Sensor */}
-              <div className="enterprise-card hero-sensor-card hero-flame-card">
+              <div className={`enterprise-card hero-sensor-card hero-flame-card ${sensors.flame.detected ? 'card-flame-critical' : ''}`}>
                 <div className="hero-card-header">
                   <div className="hero-chip-group">
-                    <span className="hero-chip chip-green">DIGITAL IR</span>
+                    <span className={`hero-chip ${sensors.flame.detected ? 'chip-red' : 'chip-green'}`}>
+                      {sensors.flame.detected ? 'CRITICAL' : 'DIGITAL IR'}
+                    </span>
                     <span className="hero-chip-sub">Active-Low Flame Sensor (GPIO 6)</span>
                   </div>
-                  <div className="hero-icon-box box-green">🔥</div>
+                  <div className={`hero-icon-box ${sensors.flame.detected ? 'box-red' : 'box-green'}`}>🔥</div>
                 </div>
                 <div className="hero-sensor-title">Optical Flame Sensor</div>
                 <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${sensors.flame.connected !== false ? (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe') : 'val-flame-disconnected'}`}>
-                    {sensors.flame.connected !== false 
-                      ? (sensors.flame.detected ? '🔥 FLAME DETECTED (1)' : 'CLEAR / SAFE (0)')
-                      : 'DISCONNECTED'}
+                  <span className={`hero-reading-value ${sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe'}`}>
+                    {sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)'}
                   </span>
-                  <span className={`hero-pill-hw ${sensors.flame.connected !== false && !isDataStale ? 'hw-connected' : 'hw-disconnected'}`}>
-                    <span className={`status-dot-sm ${sensors.flame.connected !== false && !isDataStale ? 'connected' : 'disconnected'}`}></span>
-                    {sensors.flame.connected !== false && !isDataStale ? 'Hardware Connected' : 'Hardware Disconnected'}
+                  <span className={`hero-pill-hw ${sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected'}`}>
+                    <span className={`status-dot-sm ${sensors.flame.detected ? 'disconnected pulse-dot' : 'connected'}`}></span>
+                    {sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected'}
                   </span>
                 </div>
                 <div className="hero-status-row">
                   <div className="hero-status-left">
-                    <span className={`status-dot-sm ${sensors.flame.connected !== false ? (sensors.flame.detected ? 'disconnected' : 'connected') : 'disconnected'}`}></span>
-                    <span className="hero-status-text">
-                      {sensors.flame.connected !== false 
-                        ? (sensors.flame.detected ? 'FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)')
-                        : 'Hardware Disconnected / Offline'}
+                    <span className={`status-dot-sm ${sensors.flame.detected ? 'disconnected' : 'connected'}`}></span>
+                    <span className="hero-status-text" style={{ color: sensors.flame.detected ? '#DC2626' : '#047857', fontWeight: sensors.flame.detected ? 700 : 600 }}>
+                      {sensors.flame.detected ? 'CRITICAL: FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)'}
                     </span>
                   </div>
                   <span className="hero-limit-text">Active: LOW (0V)</span>
@@ -1432,7 +1593,10 @@ export default function App() {
                 </div>
                 <div className="hero-card-footer">
                   <span>SAFE (0)</span>
-                  <span className="footer-mid"><span className="pulse-indicator-dot pulse-green"></span> ACTIVE OPTICAL</span>
+                  <span className="footer-mid">
+                    <span className={`pulse-indicator-dot ${sensors.flame.detected ? 'pulse-red' : 'pulse-green'}`}></span>
+                    {sensors.flame.detected ? 'CRITICAL FLAME ACTIVE' : 'ACTIVE OPTICAL'}
+                  </span>
                   <span>FLAME (1)</span>
                 </div>
               </div>
@@ -1478,21 +1642,6 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="tactical-reticle-box">
-                      <div className="tactical-reticle-svg">
-                        <svg width="76" height="76" viewBox="0 0 100 100" fill="none">
-                          <circle cx="50" cy="50" r="42" stroke="rgba(56, 189, 248, 0.45)" strokeWidth="1.5" strokeDasharray="6 4" />
-                          <circle cx="50" cy="50" r="22" stroke="rgba(56, 189, 248, 0.65)" strokeWidth="1.2" />
-                          <circle cx="50" cy="50" r="6" fill="rgba(56, 189, 248, 0.45)" stroke="#38BDF8" strokeWidth="1.5" />
-                          <line x1="50" y1="4" x2="50" y2="24" stroke="#38BDF8" strokeWidth="1.5" />
-                          <line x1="50" y1="76" x2="50" y2="96" stroke="#38BDF8" strokeWidth="1.5" />
-                          <line x1="4" y1="50" x2="24" y2="50" stroke="#38BDF8" strokeWidth="1.5" />
-                          <line x1="76" y1="50" x2="96" y2="50" stroke="#38BDF8" strokeWidth="1.5" />
-                          <path d="M 12 22 L 12 12 L 22 12" stroke="#38BDF8" strokeWidth="2" fill="none" />
-                          <path d="M 88 22 L 88 12 L 78 12" stroke="#38BDF8" strokeWidth="2" fill="none" />
-                          <path d="M 12 78 L 12 88 L 22 88" stroke="#38BDF8" strokeWidth="2" fill="none" />
-                          <path d="M 88 78 L 88 88 L 78 88" stroke="#38BDF8" strokeWidth="2" fill="none" />
-                        </svg>
-                      </div>
                       <div className="tactical-title">Conditions Are Normal</div>
                       <div className="tactical-subtitle">OV2640 Sensor • Auto Flashlight Prime Ready</div>
                       <button className="tactical-connect-btn" onClick={manualRetryStream}>
@@ -1592,26 +1741,26 @@ export default function App() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                   <div style={{ padding: '12px', background: 'var(--bg-main)', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Temperature Node</div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px' }}>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontFamily: 'var(--font-tactical)', letterSpacing: '0.04em' }}>TEMPERATURE NODE</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px', fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
                       {safeFormatTemp(sensors.temp.val)}
                     </div>
                   </div>
                   <div style={{ padding: '12px', background: 'var(--bg-main)', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Smoke Node</div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px' }}>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontFamily: 'var(--font-tactical)', letterSpacing: '0.04em' }}>SMOKE NODE</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px', fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
                       {safeFormatSmoke(sensors.smoke.val)}
                     </div>
                   </div>
                   <div style={{ padding: '12px', background: 'var(--bg-main)', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Flame Detection</div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px', color: sensors.flame.detected ? '#DC2626' : '#16A34A' }}>
-                      {sensors.flame.active ? (sensors.flame.detected ? 'DETECTED' : 'CLEAR') : 'N/A'}
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontFamily: 'var(--font-tactical)', letterSpacing: '0.04em' }}>FLAME DETECTION</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px', color: sensors.flame.detected ? '#DC2626' : '#16A34A', fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+                      {sensors.flame.detected ? 'DETECTED' : 'CLEAR'}
                     </div>
                   </div>
                   <div style={{ padding: '12px', background: 'var(--bg-main)', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Camera Relay</div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px' }}>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)', fontFamily: 'var(--font-tactical)', letterSpacing: '0.04em' }}>CAMERA RELAY</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, marginTop: '4px', fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
                       {cameraState}
                     </div>
                   </div>
@@ -1626,7 +1775,7 @@ export default function App() {
           <section className={`page-section ${currentTab === 'camera' ? 'active' : ''}`}>
             <div
               ref={dedicatedCameraRef}
-              className="enterprise-card"
+              className="enterprise-card dedicated-camera-card"
               style={{ padding: '24px', background: '#0B1329', border: '1px solid #1E293B' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -1721,74 +1870,78 @@ export default function App() {
           </section>
 
           {/* =================================================================
-             VIEW 4: SENSOR ANALYTICS (DETAILED CHARTS)
+             VIEW 4: SENSOR ANALYTICS (DETAILED CHARTS - FULL WIDTH STACK)
              ================================================================= */}
           <section className={`page-section ${currentTab === 'sensors' ? 'active' : ''}`}>
             <div className="sensors-page-grid">
-              {/* Temperature Detail */}
+              {/* Temperature Detail - Full Width */}
               <div className="enterprise-card sensor-detail-card">
                 <div className="sensor-detail-meta">
                   <div className="sensor-meta-top">
                     <div className="sensor-meta-icon">🌡️</div>
                     <div>
                       <div className="sensor-meta-name">Temperature Sensor (DHT22)</div>
-                      <div className="sensor-meta-id">S-TEMP-001 (ESP32-S3 GPIO 4)</div>
+                      <div className="sensor-meta-id">S-TEMP-001 (ESP32-S3 GPIO 4) • Real-time Micro-Climate Monitoring</div>
                     </div>
                   </div>
-                  <div className="sensor-meta-val">
-                    {safeFormatTemp(sensors.temp.val)}
+                  <div className="sensor-meta-right">
+                    <div className="sensor-meta-val">
+                      {safeFormatTemp(sensors.temp.val)}
+                    </div>
+                    <span className={`sensor-status-tag ${sensors.temp.val !== null ? (sensors.temp.status === 'SAFE' ? 'safe' : sensors.temp.status === 'WARNING' ? 'warning' : 'critical') : 'unavailable'}`}>
+                      {sensors.temp.val !== null ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Disconnected'}
+                    </span>
                   </div>
-                  <span className={`sensor-status-tag ${sensors.temp.val !== null ? (sensors.temp.status === 'SAFE' ? 'safe' : sensors.temp.status === 'WARNING' ? 'warning' : 'critical') : 'unavailable'}`}>
-                    {sensors.temp.val !== null ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Disconnected'}
-                  </span>
                 </div>
-                <div className="chart-container-box" style={{ height: '180px' }}>
+                <div className="chart-container-box" style={{ height: '280px', width: '100%', position: 'relative' }}>
                   <canvas ref={tempCanvasRef} id="tempDetailChart"></canvas>
                 </div>
               </div>
 
-              {/* Smoke Detail */}
+              {/* Smoke Detail - Full Width */}
               <div className="enterprise-card sensor-detail-card">
                 <div className="sensor-detail-meta">
                   <div className="sensor-meta-top">
                     <div className="sensor-meta-icon">💨</div>
                     <div>
                       <div className="sensor-meta-name">Smoke Density Sensor (MQ-2)</div>
-                      <div className="sensor-meta-id">S-SMOK-002 (ESP32-S3 GPIO 5)</div>
+                      <div className="sensor-meta-id">S-SMOK-002 (ESP32-S3 GPIO 5) • 12-Bit Analog ADC/PPM Telemetry</div>
                     </div>
                   </div>
-                  <div className="sensor-meta-val">
-                    {safeFormatSmoke(sensors.smoke.val)}
+                  <div className="sensor-meta-right">
+                    <div className="sensor-meta-val">
+                      {safeFormatSmoke(sensors.smoke.val)}
+                    </div>
+                    <span className={`sensor-status-tag ${sensors.smoke.val !== null ? (sensors.smoke.status === 'SAFE' ? 'safe' : sensors.smoke.status === 'WARNING' ? 'warning' : 'critical') : 'unavailable'}`}>
+                      {sensors.smoke.val !== null ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Disconnected'}
+                    </span>
                   </div>
-                  <span className={`sensor-status-tag ${sensors.smoke.val !== null ? (sensors.smoke.status === 'SAFE' ? 'safe' : sensors.smoke.status === 'WARNING' ? 'warning' : 'critical') : 'unavailable'}`}>
-                    {sensors.smoke.val !== null ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Disconnected'}
-                  </span>
                 </div>
-                <div className="chart-container-box" style={{ height: '180px' }}>
+                <div className="chart-container-box" style={{ height: '280px', width: '100%', position: 'relative' }}>
                   <canvas ref={smokeCanvasRef} id="smokeDetailChart"></canvas>
                 </div>
               </div>
 
-              {/* Flame Detail (Digital Active-Low Sensor) */}
+              {/* Flame Detail - Full Width */}
               <div className="enterprise-card sensor-detail-card">
                 <div className="sensor-detail-meta">
                   <div className="sensor-meta-top">
                     <div className="sensor-meta-icon">🔥</div>
                     <div>
                       <div className="sensor-meta-name">Digital Flame Sensor (Active-Low)</div>
-                      <div className="sensor-meta-id">S-FLAM-003 (ESP32-S3 GPIO 6)</div>
+                      <div className="sensor-meta-id">S-FLAM-003 (ESP32-S3 GPIO 6) • IR Optical Phototransistor Detection</div>
                     </div>
                   </div>
-                  <div className="sensor-meta-val" style={{ fontSize: '20px' }}>
-                    {sensors.flame.active
-                      ? (sensors.flame.detected ? '🔥 FLAME DETECTED' : 'CLEAR / NORMAL')
-                      : 'N/A'}
+                  <div className="sensor-meta-right">
+                    <div className="sensor-meta-val" style={{ fontSize: '24px' }}>
+                      {sensors.flame.detected ? '🔥 1 (FLAME DETECTED)' : '🛡️ 0 (CLEAR / SAFE)'}
+                    </div>
+                    <span className={`sensor-status-tag ${sensors.flame.detected ? 'critical' : 'safe'}`}>
+                      {sensors.flame.detected ? 'FIRE HAZARD DETECTED' : 'Optical Baseline Safe'}
+                    </span>
                   </div>
-                  <span className={`sensor-status-tag ${sensors.flame.detected ? 'critical' : sensors.flame.active ? 'safe' : 'unavailable'}`}>
-                    {sensors.flame.active ? (sensors.flame.detected ? 'FIRE HAZARD DETECTED' : 'Optical Baseline Safe') : 'Sensor Inactive'}
-                  </span>
                 </div>
-                <div className="chart-container-box" style={{ height: '180px' }}>
+                <div className="chart-container-box" style={{ height: '280px', width: '100%', position: 'relative' }}>
                   <canvas ref={flameCanvasRef} id="flameDetailChart"></canvas>
                 </div>
               </div>
@@ -1832,35 +1985,13 @@ export default function App() {
                 </div>
               ))}
             </div>
-
-            {/* System Audit Event Console */}
-            <div className="enterprise-card" style={{ marginTop: '24px' }}>
-              <div className="card-header-title">
-                <span style={{ fontSize: '15px', fontWeight: 700 }}>🛡️ Safety Event Audit Logs</span>
-              </div>
-              <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {responseLogs.length === 0 ? (
-                  <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic', padding: '12px 0' }}>
-                    Waiting for automated response logs...
-                  </div>
-                ) : (
-                  responseLogs.map((log, idx) => (
-                    <div key={idx} style={{ padding: '8px 0', borderBottom: '1px solid var(--border-card)', fontSize: '12.5px' }}>
-                      <span style={{ color: 'var(--primary-blue)', fontWeight: '700', marginRight: '8px' }}>[{log.type}]</span>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '11px', marginRight: '12px' }}>{log.time}</span>
-                      <span>{log.details}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
           </section>
 
           {/* =================================================================
              VIEW 6: SYSTEM DIAGNOSTICS & SETTINGS
              ================================================================= */}
-          <section className={`page-section ${(currentTab === 'diagnostics' || currentTab === 'settings') ? 'active' : ''}`}>
-            <div className="enterprise-card">
+          <section className={`page-section ${(currentTab === 'diagnostics' || currentTab === 'settings') ? 'active' : ''} settings-tab-section`}>
+            <div className="enterprise-card settings-diagnostics-card">
               <div className="card-header-title">
                 <span style={{ fontSize: '16px', fontWeight: 700 }}>{getTabTitle()}</span>
               </div>

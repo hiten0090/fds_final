@@ -72,10 +72,10 @@ export default function FacilityLocationCard({
         <div className="card-title-left">
           <span className="loc-icon-pulse">{isEmergency ? '🚨' : '📍'}</span>
           <div>
-            <div style={{ fontSize: isEmergency ? '15.5px' : '14px', fontWeight: 800 }}>
+            <div style={{ fontSize: isEmergency ? '15.5px' : '14px', fontWeight: 800, fontFamily: 'var(--font-heading)', letterSpacing: '-0.015em' }}>
               {isEmergency ? 'EMERGENCY DISPATCH LOCATION' : 'Facility Location & Routing'}
             </div>
-            <div style={{ fontSize: '11px', color: isEmergency ? '#991B1B' : 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '11px', color: isEmergency ? '#991B1B' : 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
               {isEmergency ? 'First responder coordinate routing' : 'Configured geographic position'}
             </div>
           </div>

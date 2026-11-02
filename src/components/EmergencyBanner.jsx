@@ -9,10 +9,10 @@ export default function EmergencyBanner({ active, timestamp, severity, onAcknowl
         <div className="banner-content">
           <span className="banner-pulse-icon">🚨</span>
           <div>
-            <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.02em' }}>
+            <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.04em', fontFamily: 'var(--font-brand)', textTransform: 'uppercase' }}>
               FIRE DETECTED — EMERGENCY OPERATIONS CENTER ACTIVE
             </div>
-            <div style={{ fontSize: '12px', opacity: 0.95, marginTop: '2px' }}>
+            <div style={{ fontSize: '12px', opacity: 0.95, marginTop: '2px', fontFamily: 'var(--font-sans)' }}>
               Hazard Severity: <strong>{severity ? severity.toUpperCase() : 'CRITICAL'}</strong>
               {facilityName ? ` • Facility: ${facilityName}` : ''}
               {timestamp ? ` • Detected at ${timestamp}` : ''}

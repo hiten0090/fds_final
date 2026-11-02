@@ -150,10 +150,10 @@ export default function SmsAlertCard({ isEmergency, facilityLocation }) {
         <div className="card-title-left">
           <span className="sms-icon">{isEmergency ? '🚨' : '📱'}</span>
           <div>
-            <div style={{ fontSize: isEmergency ? '15.5px' : '14px', fontWeight: 800 }}>
+            <div style={{ fontSize: isEmergency ? '15.5px' : '14px', fontWeight: 800, fontFamily: 'var(--font-heading)', letterSpacing: '-0.015em' }}>
               {isEmergency ? 'EMERGENCY SMS DISPATCH MATRIX' : 'Emergency SMS Alerts'}
             </div>
-            <div style={{ fontSize: '11px', color: isEmergency ? '#991B1B' : 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '11px', color: isEmergency ? '#991B1B' : 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
               {isEmergency ? 'Critical incident alert broadcast' : 'Automated mobile notification'}
             </div>
           </div>
@@ -328,21 +328,7 @@ export default function SmsAlertCard({ isEmergency, facilityLocation }) {
         )}
       </div>
 
-      {/* Mode Explanation Notice */}
-      {smsStatus.mode === 'mock' && (
-        <div style={{
-          marginTop: '10px',
-          padding: '8px 10px',
-          background: '#EFF6FF',
-          border: '1px solid #BFDBFE',
-          borderRadius: '6px',
-          fontSize: '11px',
-          color: '#1E40AF',
-          lineHeight: '1.4'
-        }}>
-          ℹ️ <strong>Mock Mode Active:</strong> Alert tests simulate dispatch without charging SMS credits. Whenever an emergency alert triggers or a test is executed, SMS payloads are automatically processed for the registered number(s). To enable live delivery to physical phones, switch to <code>SMS_MODE=live</code> with a provider in <code>backend/.env</code>.
-        </div>
-      )}
+
 
       {/* Message Preview (If available) */}
       {smsStatus.lastMessagePreview && (

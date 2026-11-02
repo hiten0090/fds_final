@@ -182,16 +182,16 @@ export default function WorldMapVisualizer({
               </g>
 
               {/* Latitude / Longitude Equator / Prime Labels */}
-              <text x="10" y="20" fill="rgba(255, 255, 255, 0.35)" fontSize="9" fontFamily="monospace">
+              <text x="10" y="20" fill="rgba(255, 255, 255, 0.35)" fontSize="9" fontFamily="var(--font-mono)">
                 80°N
               </text>
-              <text x="10" y="196" fill="rgba(59, 130, 246, 0.6)" fontSize="9" fontFamily="monospace">
+              <text x="10" y="196" fill="rgba(59, 130, 246, 0.6)" fontSize="9" fontFamily="var(--font-mono)">
                 0° EQUATOR
               </text>
-              <text x="10" y="385" fill="rgba(255, 255, 255, 0.35)" fontSize="9" fontFamily="monospace">
+              <text x="10" y="385" fill="rgba(255, 255, 255, 0.35)" fontSize="9" fontFamily="var(--font-mono)">
                 80°S
               </text>
-              <text x="390" y="392" fill="rgba(59, 130, 246, 0.6)" fontSize="8.5" fontFamily="monospace">
+              <text x="390" y="392" fill="rgba(59, 130, 246, 0.6)" fontSize="8.5" fontFamily="var(--font-mono)">
                 0° MERIDIAN
               </text>
             </svg>

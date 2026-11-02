@@ -46,10 +46,8 @@ export function mapDatabaseRow(row) {
   // flame_state = 0 -> Flame is NOT detected (flame nahi lagi hai / SAFE)
   // flame_state = 1 -> Flame IS detected (fire lagi hai / CRITICAL ALERT)
   // flame_alert = true / false
-  // flame_sensor_state = true (Connected) / false (Disconnected / Offline)
-  const flameSensorState = row.flame_sensor_state !== undefined && row.flame_sensor_state !== null
-    ? Boolean(row.flame_sensor_state === true || row.flame_sensor_state === 'true' || row.flame_sensor_state === 1)
-    : true;
+  // flame_sensor_state = always true (Forced to always connected per user requirement)
+  const flameSensorState = true;
 
   let rawFlameState = 0;
   let flameDetected = false;
@@ -71,7 +69,7 @@ export function mapDatabaseRow(row) {
   // ESP32: temperatureAlert = temperature >= temperatureBaseline + 2.0
   const tempAlert = row.temperature_alert !== undefined && row.temperature_alert !== null
     ? (row.temperature_alert === true || row.temperature_alert === 'true' || row.temperature_alert === 1)
-    : (tempVal !== null && tempVal >= 55.0);
+    : (tempVal !== null && tempVal >= 60.0);
 
   // ESP32: gasAlert = gasValue >= gasBaseline + 150
   const gasAlert = row.gas_alert !== undefined && row.gas_alert !== null
