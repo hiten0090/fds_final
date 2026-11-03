@@ -3995,3 +3995,39 @@ body {
 .controls-panel.tile-visible:hover {
   border-color: #9CA3AF !important;
 }
+
+/* ==========================================================================
+   23. HERO CARDS — DRAG-AND-DROP + RESIZE CONTROLS
+   ========================================================================== */
+
+/* Grid becomes flexible so wide cards can span 2 cols */
+.hero-sensors-draggable {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+/* Wide card spans 2 columns */
+.hero-sensors-draggable > [style*="span 2"] {
+  grid-column: span 2 !important;
+}
+
+/* Drag-over visual indicator (strict flat, no glow) */
+.hero-drag-over {
+  border: 2px dashed #2563EB !important;
+  background: #F0F6FF !important;
+  box-shadow: none !important;
+}
+
+/* Drag handle cursor */
+.hero-sensors-draggable .enterprise-card {
+  cursor: default;
+}
+
+/* Chip group should allow overflow horizontally for drag handle */
+.hero-chip-group {
+  align-items: center !important;
+}
+
+/* Resize button hover handled inline; no extra specificity needed */

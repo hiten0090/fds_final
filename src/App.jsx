@@ -101,6 +101,55 @@ export default function App() {
     flame: 1.50
   };
 
+  // ── Card Layout: Drag-and-Drop Order & Size Controls ──────────────────────
+  // cardOrder: array of card ids, determines render sequence
+  // cardSizes: { id: 1 | 2 } — 1 = normal (1 col), 2 = expanded (2 cols)
+  const [cardOrder, setCardOrder] = useState(['temp', 'smoke', 'flame']);
+  const [cardSizes, setCardSizes] = useState({ temp: 1, smoke: 1, flame: 1 });
+  const dragCardIdRef = useRef(null);
+
+  // Toggle a card between normal (1) and wide (2)
+  const toggleCardSize = (id) => {
+    setCardSizes(prev => ({ ...prev, [id]: prev[id] === 1 ? 2 : 1 }));
+  };
+
+  // Drag handlers — pure layout, zero sensor logic touched
+  const handleCardDragStart = (e, id) => {
+    dragCardIdRef.current = id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.style.opacity = '0.45';
+  };
+  const handleCardDragEnd = (e) => {
+    e.currentTarget.style.opacity = '';
+    dragCardIdRef.current = null;
+    document.querySelectorAll('.hero-drag-over').forEach(el => el.classList.remove('hero-drag-over'));
+  };
+  const handleCardDragOver = (e, id) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+  const handleCardDragEnter = (e) => {
+    e.currentTarget.classList.add('hero-drag-over');
+  };
+  const handleCardDragLeave = (e) => {
+    e.currentTarget.classList.remove('hero-drag-over');
+  };
+  const handleCardDrop = (e, targetId) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('hero-drag-over');
+    const sourceId = dragCardIdRef.current;
+    if (!sourceId || sourceId === targetId) return;
+    setCardOrder(prev => {
+      const next = [...prev];
+      const si = next.indexOf(sourceId);
+      const ti = next.indexOf(targetId);
+      next.splice(si, 1);
+      next.splice(ti, 0, sourceId);
+      return next;
+    });
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   // Logs & Incident Lists
   const [activeAlerts, setActiveAlerts] = useState([]);
   const [responseLogs, setResponseLogs] = useState([]);
@@ -1497,132 +1546,201 @@ export default function App() {
 
             {/* =================================================================
                ROW 1: TOP 3 HERO SENSOR TELEMETRY CARDS (DHT22, MQ-2, FLAME)
+               Drag to reorder · Click ⤢/⤡ to resize (normal ↔ wide)
                ================================================================= */}
-            <div className="hero-sensors-grid" style={{ marginBottom: '20px' }}>
-              {/* Card 1: Ambient Temperature */}
-              <div className="enterprise-card hero-sensor-card hero-temp-card">
-                <div className="hero-card-header">
-                  <div className="hero-chip-group">
-                    <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-orange'}`}>DHT22</span>
-                    <span className="hero-chip-sub">Digital Thermistor (GPIO 4)</span>
-                  </div>
-                  <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-orange'}`}>🌡️</div>
-                </div>
-                <div className="hero-sensor-title">Ambient Temperature</div>
-                <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${isDataStale || sensors.temp.val === null ? 'is-disconnected' : ''}`}>
-                    {isDataStale || sensors.temp.val === null ? '--.- °C' : safeFormatTemp(sensors.temp.val)}
-                  </span>
-                  <span className={`hero-pill-hw ${!isDataStale && sensors.temp.connected ? 'hw-connected' : 'hw-offline'}`}>
-                    <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? 'connected' : 'offline'}`}></span>
-                    {!isDataStale && sensors.temp.connected ? 'Hardware Connected' : 'Hardware Offline'}
-                  </span>
-                </div>
-                <div className="hero-status-row">
-                  <div className="hero-status-left">
-                    <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
-                    <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
-                      {isDataStale ? 'Device Offline / Standby' : (sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Hardware Disconnected')}
-                    </span>
-                  </div>
-                  <span className="hero-limit-text">Limit: 20°C (Baseline +2.0°C)</span>
-                </div>
-                <div className="hero-chart-container">
-                  <canvas ref={dashTempCanvasRef} id="dashTempDetailChart"></canvas>
-                </div>
-                <div className="hero-card-footer">
-                  <span>-60s</span>
-                  <span className="footer-mid">
-                    <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-orange'}`}></span>
-                    {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'LIVE 1.0Hz SAMPLING'}
-                  </span>
-                  <span>NOW</span>
-                </div>
-              </div>
+            <div className="hero-sensors-grid hero-sensors-draggable" style={{ marginBottom: '20px' }}>
+              {cardOrder.map((cardId) => {
+                const isWide = cardSizes[cardId] === 2;
+                const baseClass = `enterprise-card hero-sensor-card`;
+                const wideStyle = isWide
+                  ? { gridColumn: 'span 2' }
+                  : {};
 
-              {/* Card 2: Gas / Smoke Concentration */}
-              <div className="enterprise-card hero-sensor-card hero-smoke-card">
-                <div className="hero-card-header">
-                  <div className="hero-chip-group">
-                    <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-purple'}`}>MQ-2</span>
-                    <span className="hero-chip-sub">Combustible Gas &amp; Smoke (GPIO 5)</span>
-                  </div>
-                  <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-purple'}`}>💨</div>
-                </div>
-                <div className="hero-sensor-title">Gas / Smoke Concentration</div>
-                <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${isDataStale || sensors.smoke.val === null ? 'is-disconnected' : ''}`}>
-                    {isDataStale || sensors.smoke.val === null ? '-- PPM' : safeFormatSmoke(sensors.smoke.val)}
-                  </span>
-                  <span className={`hero-pill-hw ${!isDataStale && sensors.smoke.connected ? 'hw-connected' : 'hw-offline'}`}>
-                    <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? 'connected' : 'offline'}`}></span>
-                    {!isDataStale && sensors.smoke.connected ? 'Hardware Connected' : 'Hardware Offline'}
-                  </span>
-                </div>
-                <div className="hero-status-row">
-                  <div className="hero-status-left">
-                    <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
-                    <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
-                      {isDataStale ? 'Device Offline / Standby' : (sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Signal Unavailable / Disconnected')}
-                    </span>
-                  </div>
-                  <span className="hero-limit-text">Trigger: 800 ADC (Baseline +150)</span>
-                </div>
-                <div className="hero-chart-container">
-                  <canvas ref={dashSmokeCanvasRef} id="dashSmokeDetailChart"></canvas>
-                </div>
-                <div className="hero-card-footer">
-                  <span>-60s</span>
-                  <span className="footer-mid">
-                    <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-purple'}`}></span>
-                    {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'PPM: 12-BIT RES'}
-                  </span>
-                  <span>NOW</span>
-                </div>
-              </div>
+                // ── Shared drag props for each card wrapper ──
+                const dragProps = {
+                  draggable: true,
+                  onDragStart: (e) => handleCardDragStart(e, cardId),
+                  onDragEnd: handleCardDragEnd,
+                  onDragOver: (e) => handleCardDragOver(e, cardId),
+                  onDragEnter: handleCardDragEnter,
+                  onDragLeave: handleCardDragLeave,
+                  onDrop: (e) => handleCardDrop(e, cardId),
+                };
 
-              {/* Card 3: Optical Flame Sensor */}
-              <div className={`enterprise-card hero-sensor-card hero-flame-card ${!isDataStale && sensors.flame.detected ? 'card-flame-critical' : ''}`}>
-                <div className="hero-card-header">
-                  <div className="hero-chip-group">
-                    <span className={`hero-chip ${isDataStale ? 'chip-offline' : (sensors.flame.detected ? 'chip-red' : 'chip-green')}`}>
-                      {isDataStale ? 'OFFLINE' : (sensors.flame.detected ? 'CRITICAL' : 'DIGITAL IR')}
-                    </span>
-                    <span className="hero-chip-sub">Active-Low Flame Sensor (GPIO 6)</span>
+                // ── Resize toggle button (top-right corner) ──
+                const ResizeBtn = () => (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleCardSize(cardId); }}
+                    title={isWide ? 'Shrink card' : 'Expand card'}
+                    style={{
+                      background: 'none', border: '1px solid #E2E8F0', borderRadius: '3px',
+                      cursor: 'pointer', padding: '1px 5px', fontSize: '11px', color: '#64748B',
+                      lineHeight: 1, marginLeft: '6px', flexShrink: 0,
+                      transition: 'background 0.15s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                  >
+                    {isWide ? '⤡' : '⤢'}
+                  </button>
+                );
+
+                // ── Drag handle hint icon ──
+                const DragHandle = () => (
+                  <span
+                    title="Drag to reorder"
+                    style={{
+                      cursor: 'grab', fontSize: '14px', color: '#CBD5E1',
+                      marginRight: '6px', userSelect: 'none', flexShrink: 0
+                    }}
+                  >⠿</span>
+                );
+
+                // ── TEMP CARD ────────────────────────────────────────────
+                if (cardId === 'temp') return (
+                  <div key="temp" className={`${baseClass} hero-temp-card`} style={wideStyle} {...dragProps}>
+                    <div className="hero-card-header">
+                      <div className="hero-chip-group">
+                        <DragHandle />
+                        <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-orange'}`}>DHT22</span>
+                        <span className="hero-chip-sub">Digital Thermistor (GPIO 4)</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <ResizeBtn />
+                        <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-orange'}`}>🌡️</div>
+                      </div>
+                    </div>
+                    <div className="hero-sensor-title">Ambient Temperature</div>
+                    <div className="hero-reading-row">
+                      <span className={`hero-reading-value ${isDataStale || sensors.temp.val === null ? 'is-disconnected' : ''}`}>
+                        {isDataStale || sensors.temp.val === null ? '--.- °C' : safeFormatTemp(sensors.temp.val)}
+                      </span>
+                      <span className={`hero-pill-hw ${!isDataStale && sensors.temp.connected ? 'hw-connected' : 'hw-offline'}`}>
+                        <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? 'connected' : 'offline'}`}></span>
+                        {!isDataStale && sensors.temp.connected ? 'Hardware Connected' : 'Hardware Offline'}
+                      </span>
+                    </div>
+                    <div className="hero-status-row">
+                      <div className="hero-status-left">
+                        <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
+                        <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
+                          {isDataStale ? 'Device Offline / Standby' : (sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Hardware Disconnected')}
+                        </span>
+                      </div>
+                      <span className="hero-limit-text">Limit: 20°C (Baseline +2.0°C)</span>
+                    </div>
+                    <div className="hero-chart-container">
+                      <canvas ref={dashTempCanvasRef} id="dashTempDetailChart"></canvas>
+                    </div>
+                    <div className="hero-card-footer">
+                      <span>-60s</span>
+                      <span className="footer-mid">
+                        <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-orange'}`}></span>
+                        {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'LIVE 1.0Hz SAMPLING'}
+                      </span>
+                      <span>NOW</span>
+                    </div>
                   </div>
-                  <div className={`hero-icon-box ${isDataStale ? 'box-offline' : (sensors.flame.detected ? 'box-red' : 'box-green')}`}>🔥</div>
-                </div>
-                <div className="hero-sensor-title">Optical Flame Sensor</div>
-                <div className="hero-reading-row">
-                  <span className={`hero-reading-value ${isDataStale ? 'val-flame-offline' : (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe')}`}>
-                    {isDataStale ? 'OFFLINE ( -- )' : (sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)')}
-                  </span>
-                  <span className={`hero-pill-hw ${isDataStale ? 'hw-offline' : (sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected')}`}>
-                    <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected pulse-dot' : 'connected')}`}></span>
-                    {isDataStale ? 'Hardware Offline' : (sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected')}
-                  </span>
-                </div>
-                <div className="hero-status-row">
-                  <div className="hero-status-left">
-                    <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected' : 'connected')}`}></span>
-                    <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : (sensors.flame.detected ? '#DC2626' : '#047857'), fontWeight: !isDataStale && sensors.flame.detected ? 700 : 600 }}>
-                      {isDataStale ? 'Device Offline / Standby' : (sensors.flame.detected ? 'CRITICAL: FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)')}
-                    </span>
+                );
+
+                // ── SMOKE CARD ───────────────────────────────────────────
+                if (cardId === 'smoke') return (
+                  <div key="smoke" className={`${baseClass} hero-smoke-card`} style={wideStyle} {...dragProps}>
+                    <div className="hero-card-header">
+                      <div className="hero-chip-group">
+                        <DragHandle />
+                        <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-purple'}`}>MQ-2</span>
+                        <span className="hero-chip-sub">Combustible Gas &amp; Smoke (GPIO 5)</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <ResizeBtn />
+                        <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-purple'}`}>💨</div>
+                      </div>
+                    </div>
+                    <div className="hero-sensor-title">Gas / Smoke Concentration</div>
+                    <div className="hero-reading-row">
+                      <span className={`hero-reading-value ${isDataStale || sensors.smoke.val === null ? 'is-disconnected' : ''}`}>
+                        {isDataStale || sensors.smoke.val === null ? '-- PPM' : safeFormatSmoke(sensors.smoke.val)}
+                      </span>
+                      <span className={`hero-pill-hw ${!isDataStale && sensors.smoke.connected ? 'hw-connected' : 'hw-offline'}`}>
+                        <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? 'connected' : 'offline'}`}></span>
+                        {!isDataStale && sensors.smoke.connected ? 'Hardware Connected' : 'Hardware Offline'}
+                      </span>
+                    </div>
+                    <div className="hero-status-row">
+                      <div className="hero-status-left">
+                        <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
+                        <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
+                          {isDataStale ? 'Device Offline / Standby' : (sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Signal Unavailable / Disconnected')}
+                        </span>
+                      </div>
+                      <span className="hero-limit-text">Trigger: 800 ADC (Baseline +150)</span>
+                    </div>
+                    <div className="hero-chart-container">
+                      <canvas ref={dashSmokeCanvasRef} id="dashSmokeDetailChart"></canvas>
+                    </div>
+                    <div className="hero-card-footer">
+                      <span>-60s</span>
+                      <span className="footer-mid">
+                        <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-purple'}`}></span>
+                        {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'PPM: 12-BIT RES'}
+                      </span>
+                      <span>NOW</span>
+                    </div>
                   </div>
-                  <span className="hero-limit-text">Active: LOW (0V)</span>
-                </div>
-                <div className="hero-chart-container">
-                  <canvas ref={dashFlameCanvasRef} id="dashFlameDetailChart"></canvas>
-                </div>
-                <div className="hero-card-footer">
-                  <span>SAFE (0)</span>
-                  <span className="footer-mid">
-                    <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : (sensors.flame.detected ? 'pulse-red' : 'pulse-green')}`}></span>
-                    {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : (sensors.flame.detected ? 'CRITICAL FLAME ACTIVE' : 'ACTIVE OPTICAL')}
-                  </span>
-                  <span>FLAME (1)</span>
-                </div>
-              </div>
+                );
+
+                // ── FLAME CARD ───────────────────────────────────────────
+                if (cardId === 'flame') return (
+                  <div key="flame" className={`${baseClass} hero-flame-card ${!isDataStale && sensors.flame.detected ? 'card-flame-critical' : ''}`} style={wideStyle} {...dragProps}>
+                    <div className="hero-card-header">
+                      <div className="hero-chip-group">
+                        <DragHandle />
+                        <span className={`hero-chip ${isDataStale ? 'chip-offline' : (sensors.flame.detected ? 'chip-red' : 'chip-green')}`}>
+                          {isDataStale ? 'OFFLINE' : (sensors.flame.detected ? 'CRITICAL' : 'DIGITAL IR')}
+                        </span>
+                        <span className="hero-chip-sub">Active-Low Flame Sensor (GPIO 6)</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <ResizeBtn />
+                        <div className={`hero-icon-box ${isDataStale ? 'box-offline' : (sensors.flame.detected ? 'box-red' : 'box-green')}`}>🔥</div>
+                      </div>
+                    </div>
+                    <div className="hero-sensor-title">Optical Flame Sensor</div>
+                    <div className="hero-reading-row">
+                      <span className={`hero-reading-value ${isDataStale ? 'val-flame-offline' : (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe')}`}>
+                        {isDataStale ? 'OFFLINE ( -- )' : (sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)')}
+                      </span>
+                      <span className={`hero-pill-hw ${isDataStale ? 'hw-offline' : (sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected')}`}>
+                        <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected pulse-dot' : 'connected')}`}></span>
+                        {isDataStale ? 'Hardware Offline' : (sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected')}
+                      </span>
+                    </div>
+                    <div className="hero-status-row">
+                      <div className="hero-status-left">
+                        <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected' : 'connected')}`}></span>
+                        <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : (sensors.flame.detected ? '#DC2626' : '#047857'), fontWeight: !isDataStale && sensors.flame.detected ? 700 : 600 }}>
+                          {isDataStale ? 'Device Offline / Standby' : (sensors.flame.detected ? 'CRITICAL: FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)')}
+                        </span>
+                      </div>
+                      <span className="hero-limit-text">Active: LOW (0V)</span>
+                    </div>
+                    <div className="hero-chart-container">
+                      <canvas ref={dashFlameCanvasRef} id="dashFlameDetailChart"></canvas>
+                    </div>
+                    <div className="hero-card-footer">
+                      <span>SAFE (0)</span>
+                      <span className="footer-mid">
+                        <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : (sensors.flame.detected ? 'pulse-red' : 'pulse-green')}`}></span>
+                        {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : (sensors.flame.detected ? 'CRITICAL FLAME ACTIVE' : 'ACTIVE OPTICAL')}
+                      </span>
+                      <span>FLAME (1)</span>
+                    </div>
+                  </div>
+                );
+
+                return null;
+              })}
             </div>
 
             {/* =================================================================

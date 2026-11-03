@@ -235,3 +235,4 @@ C. When ESP32 Powers ON:
    Whenever files in `src/` or `esp32_firmware/` are modified, build with `npm run build` 
    and commit/push to `origin main` so Netlify automatically updates the live website.
 ================================================================================
+
