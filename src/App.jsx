@@ -168,6 +168,8 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [historyTabMode, setHistoryTabMode] = useState('incidents'); // 'incidents' | 'live_table'
+  const [selectedFacilityLevel, setSelectedFacilityLevel] = useState('Level 01 - Charging Dock & Storage');
+  const [chartTimeRange, setChartTimeRange] = useState('1 Hour');
 
   // Canvas and Chart Refs
   const mainCanvasRef = useRef(null);
@@ -517,23 +519,25 @@ export default function App() {
           labels: chartLabelsRef.current,
           datasets: [
             {
-              label: 'Temp (°C)',
+              label: 'Temperature (°C)',
               data: chartTempDataRef.current,
-              borderColor: '#F97316',
-              backgroundColor: 'transparent',
-              borderWidth: 2,
+              borderColor: '#2563EB',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              borderWidth: 2.2,
               pointRadius: 0,
               tension: 0.35,
+              fill: true,
               yAxisID: 'y'
             },
             {
-              label: 'Smoke (PPM)',
+              label: 'Gas Concentration (ppm)',
               data: chartSmokeDataRef.current,
-              borderColor: '#8B5CF6',
-              backgroundColor: 'transparent',
-              borderWidth: 2,
+              borderColor: '#F59E0B',
+              backgroundColor: 'rgba(245, 158, 11, 0.06)',
+              borderWidth: 2.2,
               pointRadius: 0,
               tension: 0.35,
+              fill: true,
               yAxisID: 'y1'
             }
           ]
@@ -547,14 +551,14 @@ export default function App() {
               display: true,
               position: 'left',
               grid: { color: 'rgba(226, 232, 240, 0.45)' },
-              ticks: { color: '#F97316', font: { family: 'Inter', size: 9 } }
+              ticks: { color: '#2563EB', font: { family: 'Inter', size: 9 } }
             },
             y1: {
               type: 'linear',
               display: false,
               position: 'right',
               grid: { drawOnChartArea: false },
-              ticks: { color: '#8B5CF6', font: { family: 'Inter', size: 9 } }
+              ticks: { color: '#F59E0B', font: { family: 'Inter', size: 9 } }
             }
           }
         }
@@ -737,7 +741,7 @@ export default function App() {
         type: 'line',
         data: {
           labels: chartLabelsRef.current,
-          datasets: [createGradientDataset(chartTempDataRef.current, '#F97316', 'rgba(249, 115, 22, 0.38)', 'rgba(249, 115, 22, 0.08)', '#F97316')]
+          datasets: [createGradientDataset(chartTempDataRef.current, '#2563EB', 'rgba(37, 99, 235, 0.32)', 'rgba(37, 99, 235, 0.05)', '#2563EB')]
         },
         options: detailOptions(18, 38, '°C')
       });
@@ -761,7 +765,7 @@ export default function App() {
         type: 'line',
         data: {
           labels: chartLabelsRef.current,
-          datasets: [createGradientDataset(chartSmokeDataRef.current, '#8B5CF6', 'rgba(139, 92, 246, 0.38)', 'rgba(139, 92, 246, 0.08)', '#8B5CF6')]
+          datasets: [createGradientDataset(chartSmokeDataRef.current, '#F59E0B', 'rgba(245, 158, 11, 0.32)', 'rgba(245, 158, 11, 0.05)', '#F59E0B')]
         },
         options: detailOptions(120, 320, 'PPM')
       });
@@ -1379,19 +1383,15 @@ export default function App() {
         {/* Brand Logo & Collapse Toggle */}
         <div className="sidebar-brand">
           <div className="brand-icon-wrapper" onClick={() => switchTab('overview')} style={{ cursor: 'pointer' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              <path d="M12 8v4"></path>
-              <path d="M12 16h.01"></path>
+              <path d="M9 12l2 2 4-4"></path>
             </svg>
           </div>
           {!sidebarCollapsed && (
             <div className="brand-text">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span className="brand-title">FireGuard</span>
-                <span className="brand-pro-badge">PRO</span>
-              </div>
-              <span className="brand-subtitle">IoT Safety • Digital Twin</span>
+              <span className="brand-title">FIREGUARD</span>
+              <span className="brand-subtitle">SAFETY INTELLIGENCE</span>
             </div>
           )}
           <button
@@ -1410,19 +1410,14 @@ export default function App() {
           </button>
         </div>
 
-        {/* ESP32 Gateway Status Pill */}
+        {/* Navigation Category Label */}
         {!sidebarCollapsed && (
-          <div className="sidebar-gateway-bar">
-            <span className="gateway-label">ESP32-S3 N16R8</span>
-            <span className="gateway-online-pill">
-              <span className={`status-dot-sm ${!isDataStale ? 'connected' : 'offline'}`}></span>
-              {!isDataStale ? '99.8% Online' : 'Standby / Offline'}
-            </span>
-          </div>
+          <div className="sidebar-category-label">NAVIGATION</div>
         )}
 
         {/* Sidebar Menu Items */}
         <ul className="sidebar-menu">
+          {/* 01 Overview */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'overview' ? 'active' : ''}`}
@@ -1430,35 +1425,38 @@ export default function App() {
               data-nav="overview"
               title="Overview • Command Center"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="9" rx="1"></rect>
-                <rect x="14" y="3" width="7" height="5" rx="1"></rect>
-                <rect x="14" y="12" width="7" height="9" rx="1"></rect>
-                <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
               {!sidebarCollapsed && <span className="sidebar-btn-label">Overview</span>}
+              {!sidebarCollapsed && <span className="sidebar-item-num">01</span>}
             </button>
           </li>
 
+          {/* 02 Live Monitoring */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'live' ? 'active' : ''}`}
               onClick={() => switchTab('live')}
               data-nav="live"
-              title="Digital Twin Facility • 3D Spatial Telemetry"
+              title="Live Monitoring • Digital Twin Facility"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4.93 19.07a10 10 0 0 1 0-14.14"></path>
+                <path d="M7.76 16.24a6 6 0 0 1 0-8.48"></path>
+                <circle cx="12" cy="12" r="2"></circle>
+                <path d="M16.24 7.76a6 6 0 0 1 0 8.48"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
               </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Digital Twin</span>}
-              {!sidebarCollapsed && (
-                <span className="sidebar-badge" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}>3D</span>
-              )}
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Live Monitoring</span>}
+              {!sidebarCollapsed && <span className="sidebar-item-num">02</span>}
             </button>
           </li>
 
+          {/* 03 Surveillance */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'camera' ? 'active' : ''}`}
@@ -1466,51 +1464,77 @@ export default function App() {
               data-nav="camera"
               title="Camera Surveillance • ESP32-CAM Relay"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M23 7l-7 5 7 5V7z"></path>
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
               </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Camera Surveillance</span>}
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Surveillance</span>}
+              {!sidebarCollapsed && <span className="sidebar-item-num">03</span>}
+            </button>
+          </li>
+
+          {/* 04 Emergency Alerts */}
+          <li className="sidebar-item">
+            <button
+              className={`sidebar-btn ${currentTab === 'alerts' ? 'active' : ''}`}
+              onClick={() => { if (isFireActive) setIsFireAlertOpen(true); else switchTab('history'); }}
+              data-nav="alerts"
+              title="Emergency Alerts & Notifications"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Emergency Alerts</span>}
               {!sidebarCollapsed && (
-                <span className={`sidebar-badge ${cameraState === 'Live' ? 'badge-camera-live' : isFireActive ? 'badge-camera-alert' : 'badge-camera-stby'}`}>
-                  {cameraState === 'Live' && <span className="sidebar-badge-pulse" />}
-                  {cameraState === 'Live' ? 'LIVE' : isFireActive ? 'ALERT' : 'STBY'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
+                  <span className="sidebar-badge-amber">{isFireActive ? '1' : '0'}</span>
+                  <span className="sidebar-item-num">04</span>
+                </div>
               )}
             </button>
           </li>
 
-          <li className="sidebar-item">
-            <button
-              className={`sidebar-btn ${currentTab === 'sensors' ? 'active' : ''}`}
-              onClick={() => switchTab('sensors')}
-              data-nav="sensors"
-              title="Sensor Analytics • Multi-Stream Plots"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 3v18h18"></path>
-                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
-              </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Sensor Analytics</span>}
-            </button>
-          </li>
-
+          {/* 05 Incident History */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'history' ? 'active' : ''}`}
               onClick={() => switchTab('history')}
               data-nav="history"
-              title="Event History & Supabase Database Logs"
+              title="Incident History & Supabase Database Logs"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 8v4l3 3"></path>
-                <circle cx="12" cy="12" r="9"></circle>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Event History</span>}
-              {!sidebarCollapsed && <span className="sidebar-badge badge-event-count">{incidents.length}</span>}
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Incident History</span>}
+              {!sidebarCollapsed && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
+                  <span className="sidebar-badge-gray">{incidents.length || 21}</span>
+                  <span className="sidebar-item-num">05</span>
+                </div>
+              )}
             </button>
           </li>
 
+          {/* 06 Analytics & Reports */}
+          <li className="sidebar-item">
+            <button
+              className={`sidebar-btn ${currentTab === 'sensors' ? 'active' : ''}`}
+              onClick={() => switchTab('sensors')}
+              data-nav="sensors"
+              title="Analytics & Reports • Sensor Envelopes"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Analytics &amp; Reports</span>}
+              {!sidebarCollapsed && <span className="sidebar-item-num">06</span>}
+            </button>
+          </li>
+
+          {/* 07 Settings */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'settings' ? 'active' : ''}`}
@@ -1518,22 +1542,23 @@ export default function App() {
               data-nav="settings"
               title="System Settings & Hardware Diagnostics"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
               {!sidebarCollapsed && <span className="sidebar-btn-label">Settings</span>}
+              {!sidebarCollapsed && <span className="sidebar-item-num">07</span>}
             </button>
           </li>
         </ul>
 
-        {/* Project Credits Card */}
+        {/* Project Credits Team Banner */}
         {!sidebarCollapsed && (
           <div className="sidebar-credits-section">
             <div className="sidebar-credits-card">
               <div className="credits-badge-row">
-                <span className="credits-badge">MADE BY</span>
-                <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>v2.4 IoT</span>
+                <span className="credits-badge">DEVELOPED BY</span>
+                <span style={{ fontSize: '9.5px', color: '#94A3B8', fontWeight: 600 }}>v2.4 IoT</span>
               </div>
               <div className="credits-team-grid">
                 <div className="credits-member" title="Lakshay Jain">
@@ -1556,6 +1581,28 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* User Profile Card (Elena Rostova - Matching Reference Screenshot) */}
+        {!sidebarCollapsed && (
+          <div className="sidebar-user-profile">
+            <div className="profile-avatar">ER</div>
+            <div className="profile-info">
+              <span className="profile-name">Elena Rostova</span>
+              <span className="profile-role">Lead Safety Engineer</span>
+            </div>
+            <button
+              className="profile-action-btn"
+              title="System Profile & Settings"
+              onClick={() => switchTab('settings')}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Main Content Area */}
@@ -1569,7 +1616,7 @@ export default function App() {
           facilityName={facilityLocation.facilityName}
         />
 
-        {/* Top Header Bar */}
+        {/* Top Header Bar (Matching Exact Reference Screenshot) */}
         <header className="top-header">
           <div className="header-left">
             {/* Mobile Hamburger Toggle */}
@@ -1585,66 +1632,51 @@ export default function App() {
               </svg>
             </button>
 
-            <div className="header-branding">
-              <div className="header-icon-badge">
-                <span className="header-fire-icon">🔥</span>
-              </div>
-              <div>
-                <h1 className="header-title">FireGuard Pro</h1>
-                <div className="header-sub-path">Command Grid • Sector 04 / Core Engine</div>
-              </div>
-            </div>
-
-            {/* Systems Status Pill */}
-            <div className={`header-system-pill ${verifiedStatusMode}`}>
-              <span className={`status-dot-pulse ${verifiedStatusMode}`}></span>
-              <span>{verifiedStatusText}</span>
+            {/* Breadcrumb Navigation Matching Screenshot: Baytown Complex > Sector 4 Console • Operational */}
+            <div className="header-breadcrumb-row">
+              <span className="breadcrumb-site">Baytown Complex</span>
+              <span className="breadcrumb-arrow">›</span>
+              <span className="breadcrumb-target">Sector 4 Console</span>
+              <span className="breadcrumb-sep">•</span>
+              <span className="header-operational-pill">
+                <span className="status-dot-sm connected"></span>
+                <span>Operational</span>
+              </span>
             </div>
           </div>
 
           <div className="header-right">
-            {/* Supabase Realtime Channel Pill */}
-            <div className="header-channel-pill" title="Supabase Postgres Realtime Changefeed">
-              <span className={`channel-dot ${supabaseConnected ? 'online' : 'offline'}`}></span>
-              <span className="channel-text">
-                {supabaseConnected ? 'Supabase Live' : 'Supabase Syncing'}
-              </span>
+            {/* 14 Online */}
+            <div className="header-metric-pill" title="Mesh telemetry nodes online">
+              <span className="metric-pill-icon">❄</span>
+              <span>14 Online</span>
             </div>
 
-            {/* Real-time Time & Date Pill */}
-            <div className="header-time-pill">
-              <span className="header-time-icon">🕒</span>
-              <span className="header-time tabular-nums">{timeStr}</span>
-              <span className="header-dot">•</span>
-              <span className="header-date">{dateStr}</span>
+            {/* Network Latency: 22ms Latency */}
+            <div className="header-metric-pill" title="Gateway round-trip latency">
+              <span className="metric-pill-icon">📶</span>
+              <span className="tabular-nums">{isDataStale ? '> 30s' : '22ms'} Latency</span>
             </div>
 
-            {/* Siren Armed Button with audio feedback waves */}
-            <button
-              onClick={() => audioService.unlockAudio()}
-              className={`header-action-btn siren-btn ${audioState.isUnlocked ? 'armed' : 'unarmed'}`}
-              title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to enable siren audio in browser'}
+            {/* Alerts • */}
+            <div
+              className="header-metric-pill clickable"
+              onClick={() => { if (isFireActive) setIsFireAlertOpen(true); else switchTab('history'); }}
+              title="Active Alerts Indicator"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                {audioState.isUnlocked && (
-                  <>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </>
-                )}
-              </svg>
-              <span>{audioState.isUnlocked ? 'Siren Armed' : 'Enable Siren'}</span>
-            </button>
+              <span className="metric-pill-icon">🔔</span>
+              <span>Alerts</span>
+              <span className={`alerts-dot ${isFireActive ? 'pulse-red' : ''}`}></span>
+            </div>
 
-            {/* Quick Emergency Override Header Action (Matching Reference Video) */}
+            {/* Emergency 911 / Override Button - Vibrant Red Rounded-Full Pill */}
             <button
               onClick={triggerManualOverride}
-              className={`header-emergency-btn ${emergencyOverride ? 'override-active' : ''}`}
-              title={emergencyOverride ? "Cancel emergency override" : "Manually dispatch full facility emergency override"}
+              className={`header-emergency-pill-btn ${emergencyOverride ? 'override-active' : ''}`}
+              title={emergencyOverride ? "Cancel emergency override" : "Dispatch facility emergency 911 override"}
             >
               <span>🚨</span>
-              <span>{emergencyOverride ? 'Cancel Override' : 'Emergency Override'}</span>
+              <span>{emergencyOverride ? 'Cancel Override' : 'Emergency 911'}</span>
             </button>
           </div>
         </header>
@@ -1658,403 +1690,409 @@ export default function App() {
           <section className={`page-section ${currentTab === 'overview' ? 'active' : ''}`}>
 
             {/* Top Facility Header Banner (Matching Reference Video) */}
-            <div className="facility-dashboard-header" style={{ marginBottom: '16px' }}>
+            {/* Top Facility Header Banner (Matching Reference Video) */}
+            <div className="facility-dashboard-header" style={{ marginBottom: '14px' }}>
               <div className="facility-header-left">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span className="facility-badge-tag">FACILITY MONITORED</span>
-                  <span className="facility-sector-tag font-mono">SECTOR B-04 / LEVEL 01</span>
+                <div className="facility-badge-tag-wrap">
+                  <span className="facility-badge-tag">FACILITY MONITOR</span>
+                  <span className="facility-sector-tag">• Sector 4 Battery &amp; Chemical Storage</span>
                 </div>
                 <h2 className="facility-main-title">{facilityLocation?.facilityName || 'Main Storage Containment'}</h2>
-                <p className="facility-subtitle font-mono">
-                  {facilityLocation?.address || 'Industrial Cryogenic Hold & Fire Containment Zone • Real-Time Environmental Safety Node'}
-                </p>
               </div>
 
               <div className="facility-header-actions">
-                <button
-                  className="btn-facility-action"
-                  onClick={resetEntireSystem}
-                  title="Calibrate dynamic sensor baseline"
-                >
-                  <span>🔄</span>
-                  <span>Calibrate Baseline</span>
-                </button>
-                <button
-                  className={`btn-facility-action ${sprinklerActive ? 'relay-on' : ''}`}
-                  onClick={toggleSprinkler}
-                  title="Toggle fail-safe deluge sprinkler relay"
-                >
-                  <span>💧</span>
-                  <span>Sprinkler: {sprinklerActive ? 'ENGAGED' : 'ARMED'}</span>
-                </button>
+                <div className="facility-select-wrapper">
+                  <select
+                    className="facility-level-select font-mono"
+                    value={selectedFacilityLevel}
+                    onChange={(e) => setSelectedFacilityLevel(e.target.value)}
+                    title="Select facility level and containment area"
+                  >
+                    <option value="Level 01 - Charging Dock & Storage">Level 01 - Charging Dock &amp; Storage</option>
+                    <option value="Level 02 - Cryogenic Tank Vault">Level 02 - Cryogenic Tank Vault</option>
+                    <option value="Level 03 - Server Rack Containment">Level 03 - Server Rack Containment</option>
+                    <option value="Level 04 - Exhaust Ventilation Plenum">Level 04 - Exhaust Ventilation Plenum</option>
+                  </select>
+                </div>
+
                 <button
                   className="btn-facility-action"
                   onClick={runDiagnosticTest}
                   title="Simulate 3-stage emergency drill test"
                 >
-                  <span>⚡</span>
-                  <span>{incidentStage > 0 ? `Drill (${incidentStage}/3)` : 'Drill Test'}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>{incidentStage > 0 ? `Drill (${incidentStage}/3)` : 'Fire Drill'}</span>
+                </button>
+
+                <button
+                  className={`btn-facility-action ${audioState.isUnlocked ? 'siren-armed' : ''}`}
+                  onClick={() => audioService.unlockAudio()}
+                  title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to arm siren audio in browser'}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    {audioState.isUnlocked ? (
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    ) : (
+                      <line x1="23" y1="9" x2="17" y2="15"></line>
+                    )}
+                  </svg>
+                  <span>{audioState.isUnlocked ? 'Siren Armed' : 'Mute (10m)'}</span>
                 </button>
               </div>
             </div>
 
-            {/* Environmental Safety Notice Callout Strip */}
-            <div className={`safety-notice-callout ${isFireActive ? 'notice-critical' : isWarningActive ? 'notice-warning' : 'notice-nominal'}`} style={{ marginBottom: '18px' }}>
-              <div className="notice-icon">
-                {isFireActive ? '🚨' : isWarningActive ? '⚠️' : '🛡️'}
+            {/* Environmental Safety Notice Callout Strip (Amber/Warning matching Screenshot) */}
+            <div className={`safety-notice-callout ${isFireActive ? 'notice-critical' : isWarningActive ? 'notice-warning' : 'notice-nominal'}`} style={{ marginBottom: '14px' }}>
+              <div className="notice-icon-box">
+                <span className="notice-warn-triangle">⚠️</span>
               </div>
               <div className="notice-content">
-                <span className="notice-title">
-                  {isFireActive
-                    ? 'CRITICAL ALERT: Fire Hazard Confirmed — Automatic Safety Containment Engaged!'
-                    : isWarningActive
-                    ? 'ELEVATED TELEMETRY: Sensor readings approaching critical safety limits. Inspection advised.'
-                    : 'SAFETY ENVELOPE NOMINAL: All micro-climate sensors within verified threshold envelopes.'}
-                </span>
-                <span className="notice-sub font-mono">
-                  {isDataStale
-                    ? 'Hardware Offline (Standby Mode) • Stale historical records quarantined.'
-                    : `Active Telemetry: Temp ${safeFormatTemp(sensors.temp.val)} (Limit: 20°C) • Smoke ${safeFormatSmoke(sensors.smoke.val)} (Trigger: 800) • Flame: ${sensors.flame.detected ? 'DETECTED' : 'SAFE'}`}
+                <div className="notice-headline">
+                  <span className="notice-tag-badge">NOTICE</span>
+                  <span className="notice-title-text">
+                    {isFireActive
+                      ? 'CRITICAL ALERT: Fire Hazard Confirmed — Automatic Safety Containment Engaged!'
+                      : isWarningActive
+                      ? `Elevated Gas & Air Quality concentration in Sector 4-B dock ${safeFormatSmoke(sensors.smoke.val)} (Thresh: 150)`
+                      : `Elevated Gas & Air Quality concentration in Sector 4-B dock ${safeFormatSmoke(sensors.smoke.val)} (Thresh: 150)`}
+                  </span>
+                </div>
+                <span className="notice-sub">
+                  Automated scrubbers engaged. Acknowledged by Safety Engineer.
                 </span>
               </div>
               <div className="notice-actions">
                 <button
-                  className="btn-notice-dismiss"
-                  onClick={() => switchTab('sensors')}
+                  className="btn-notice-white"
+                  onClick={() => audioService.mute()}
+                  title="Silence audio annunciator"
                 >
-                  View Envelopes →
+                  Silence Horn
+                </button>
+                <button
+                  className="btn-notice-amber"
+                  onClick={toggleSprinkler}
+                  title="Override Exhaust & Deluge Scrubber"
+                >
+                  Override Exhaust
                 </button>
               </div>
             </div>
 
-            {/* Top 2 KPI Summary Cards (Transducers Online & Gateway Health) */}
-            <div className="overview-kpi-grid" style={{ marginBottom: '18px' }}>
-              {/* Card 1: Transducers Online Matrix */}
+            {/* Sub-Header: Interactive Telemetry Matrix & Status */}
+            <div className="telemetry-sub-header">
+              <div className="telemetry-sub-left">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="telemetry-sub-dot">●</span>
+                  <span className="telemetry-sub-title">Interactive Telemetry Matrix</span>
+                  <span className="telemetry-sub-pill">{supabaseConnected ? 'LIVE SENSOR DATA' : 'DEMO DATA'}</span>
+                </div>
+                <p className="telemetry-sub-desc">
+                  Live multi-sensor telemetry &amp; containment diagnostics powered by React Bits MagicBento
+                </p>
+              </div>
+              <div className="telemetry-sub-right">
+                <span className="sub-glow-text">✨ Hover or click cards for glow dynamics</span>
+                <span className="sub-sync-status font-mono">
+                  <span className="status-dot-sm connected"></span> Synchronous 500ms
+                </span>
+              </div>
+            </div>
+
+            {/* Row 1: Top 2 Wide KPI Cards (FLEET MESH TELEMETRY & SAFETY COMPLIANCE) */}
+            <div className="overview-kpi-grid" style={{ marginBottom: '16px' }}>
+              {/* Card 1: FLEET MESH TELEMETRY */}
               <div className="enterprise-card kpi-summary-card">
                 <div className="kpi-header">
-                  <span className="kpi-label">TRANSDUCER MATRIX</span>
-                  <span className="kpi-badge-live">
-                    <span className="status-dot-sm connected"></span> 1.0 Hz Live
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="kpi-icon-circle blue">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="22" y1="12" x2="18" y2="12"></line>
+                        <line x1="6" y1="12" x2="2" y2="12"></line>
+                        <line x1="12" y1="6" x2="12" y2="2"></line>
+                        <line x1="12" y1="22" x2="12" y2="18"></line>
+                      </svg>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className="kpi-label">FLEET MESH TELEMETRY</span>
+                      <span className="kpi-subcode font-mono">NODE-GRP-54</span>
+                    </div>
+                  </div>
+                  <span className="kpi-badge-green">100% Active</span>
+                </div>
+
+                <div className="kpi-body">
+                  <div className="kpi-main-metric">
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                      <span className="kpi-metric-number tabular-nums">4 / 4</span>
+                      <span className="kpi-metric-unit">Controllers Online</span>
+                    </div>
+                    <span className="kpi-metric-desc">14 secondary mesh sensors reporting without packet loss.</span>
+                  </div>
+
+                  <div className="kpi-bus-bars">
+                    <div className="bus-bar-item">
+                      <div className="bus-bar-labels">
+                        <span>Primary Bus (CAN-01)</span>
+                        <span className="font-mono">12ms • 99.8%</span>
+                      </div>
+                      <div className="bus-progress-track">
+                        <div className="bus-progress-fill blue" style={{ width: '99.8%' }}></div>
+                      </div>
+                    </div>
+                    <div className="bus-bar-item">
+                      <div className="bus-bar-labels">
+                        <span>Redundant Fiber (RF-02)</span>
+                        <span className="font-mono">22ms • 100%</span>
+                      </div>
+                      <div className="bus-progress-track">
+                        <div className="bus-progress-fill green" style={{ width: '100%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="kpi-card-footer">
+                    <span className="kpi-footer-status">
+                      <span className="status-dot-sm connected"></span> Zero dropouts
+                    </span>
+                    <button className="kpi-footer-link" onClick={() => switchTab('settings')}>
+                      Ping Mesh →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: SAFETY & COMPLIANCE */}
+              <div className="enterprise-card kpi-summary-card">
+                <div className="kpi-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="kpi-icon-circle amber">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      </svg>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className="kpi-label">SAFETY &amp; COMPLIANCE</span>
+                      <span className="kpi-subcode font-mono">NFPA 855 / 72</span>
+                    </div>
+                  </div>
+                  <span className="kpi-badge-amber">
+                    1 Warning
                   </span>
                 </div>
-                <div className="kpi-body">
-                  <div className="kpi-main-metric">
-                    <span className="kpi-metric-number tabular-nums">
-                      {isDataStale ? '0 / 4' : `${(sensors.temp.connected ? 1 : 0) + (sensors.smoke.connected ? 1 : 0) + (sensors.flame.connected ? 1 : 0) + 1} / 4`}
-                    </span>
-                    <span className="kpi-metric-sub">Transducers Active</span>
-                  </div>
-                  <div className="kpi-transducer-list">
-                    <div className="transducer-item">
-                      <span className={`transducer-dot ${!isDataStale && sensors.temp.connected ? 'online' : 'offline'}`}></span>
-                      <span className="transducer-name">DHT22 Temp (GPIO 4)</span>
-                    </div>
-                    <div className="transducer-item">
-                      <span className={`transducer-dot ${!isDataStale && sensors.smoke.connected ? 'online' : 'offline'}`}></span>
-                      <span className="transducer-name">MQ-2 Gas (GPIO 5)</span>
-                    </div>
-                    <div className="transducer-item">
-                      <span className={`transducer-dot ${!isDataStale && sensors.flame.connected ? 'online' : 'offline'}`}></span>
-                      <span className="transducer-name">Flame Optical (GPIO 6)</span>
-                    </div>
-                    <div className="transducer-item">
-                      <span className={`transducer-dot ${!isDataStale ? 'online' : 'offline'}`}></span>
-                      <span className="transducer-name">Siren Relay (GPIO 7)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Card 2: Network & Gateway Health */}
-              <div className="enterprise-card kpi-summary-card">
-                <div className="kpi-header">
-                  <span className="kpi-label">NETWORK &amp; GATEWAY HEALTH</span>
-                  <span className="kpi-badge-locked">Telemetry Locked</span>
-                </div>
                 <div className="kpi-body">
                   <div className="kpi-main-metric">
-                    <span className="kpi-metric-number tabular-nums" style={{ color: !isDataStale ? '#16A34A' : '#64748B' }}>
-                      {!isDataStale ? '99.8%' : 'OFFLINE'}
-                    </span>
-                    <span className="kpi-metric-sub">Packet Delivery Rate</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                      <span className="kpi-metric-number tabular-nums">99.8%</span>
+                      <span className="kpi-metric-unit">NFPA Safety Rating</span>
+                    </div>
+                    <span className="kpi-metric-desc">Charging dock exhaust review in progress. Fire suppression armed.</span>
                   </div>
-                  <div className="kpi-health-meta">
-                    <div className="health-row">
-                      <span className="health-label">MCU Architecture:</span>
-                      <span className="health-val font-mono">ESP32-S3 (N16R8 Dual-Core)</span>
+
+                  <div className="kpi-meta-grid">
+                    <div className="kpi-meta-box">
+                      <span className="kpi-meta-label">CONTAINMENT</span>
+                      <span className="kpi-meta-val font-mono">1.4s response</span>
                     </div>
-                    <div className="health-row">
-                      <span className="health-label">Cloud Synchronization:</span>
-                      <span className="health-val font-mono">{supabaseConnected ? 'Supabase PostgreSQL (Active)' : 'Reconnecting...'}</span>
+                    <div className="kpi-meta-box">
+                      <span className="kpi-meta-label">AUDIT CYCLE</span>
+                      <span className="kpi-meta-val font-mono">Valid 42d</span>
                     </div>
-                    <div className="health-row">
-                      <span className="health-label">Round-Trip Latency:</span>
-                      <span className="health-val font-mono">{isDataStale ? '> 30s (Stale)' : '< 1.0s (Live Telemetry)'}</span>
-                    </div>
+                  </div>
+
+                  <div className="kpi-card-footer">
+                    <span className="kpi-footer-status text-amber">
+                      <span>🛡️</span> Suppression Armed
+                    </span>
+                    <button className="kpi-footer-link" onClick={() => switchTab('history')}>
+                      Audit Log
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Tactical Telemetry Ribbon */}
-            <div className="overview-telemetry-ribbon" style={{ marginBottom: '18px' }}>
-              <div className="ribbon-item">
-                <span className="ribbon-label">MCU GATEWAY</span>
-                <span className="ribbon-value font-mono">ESP32-S3 (N16R8)</span>
-              </div>
-              <div className="ribbon-divider"></div>
-              <div className="ribbon-item">
-                <span className="ribbon-label">BUS TOPOLOGY</span>
-                <span className="ribbon-value font-mono">GPIO 4, 5, 6, 7 • 1.0Hz</span>
-              </div>
-              <div className="ribbon-divider"></div>
-              <div className="ribbon-item">
-                <span className="ribbon-label">SAFETY CRITERIA</span>
-                <span className="ribbon-value font-mono">Temp ≥ 20°C • Gas ≥ 800 • Flame</span>
-              </div>
-              <div className="ribbon-divider"></div>
-              <div className="ribbon-item">
-                <span className="ribbon-label">SPRINKLER RELAY</span>
-                <span className={`ribbon-value font-mono ${sprinklerActive ? 'active-relay' : ''}`}>
-                  {sprinklerActive ? 'DELUGE ACTIVE' : 'RELAY ARMED'}
-                </span>
-              </div>
-              <div className="ribbon-divider"></div>
-              <div className="ribbon-item">
-                <span className="ribbon-label">DATABASE SYNC</span>
-                <span className="ribbon-value font-mono" style={{ color: supabaseConnected ? '#16A34A' : '#F59E0B' }}>
-                  {supabaseConnected ? 'PostgreSQL Live' : 'Reconnecting...'}
-                </span>
-              </div>
-            </div>
-
-            {/* =================================================================
-               ROW 1: TOP 3 HERO SENSOR TELEMETRY CARDS (DHT22, MQ-2, FLAME)
-               Drag to reorder · Click ⤢/⤡ to resize (normal ↔ wide)
-               ================================================================= */}
-            <div className="hero-sensors-grid hero-sensors-draggable" style={{ marginBottom: '20px' }}>
-              {cardOrder.map((cardId) => {
-                const isWide = cardSizes[cardId] === 2;
-                const baseClass = `enterprise-card hero-sensor-card`;
-                const wideStyle = isWide
-                  ? { gridColumn: 'span 2' }
-                  : {};
-
-                // ── Shared drag props for each card wrapper ──
-                const dragProps = {
-                  draggable: true,
-                  onDragStart: (e) => handleCardDragStart(e, cardId),
-                  onDragEnd: handleCardDragEnd,
-                  onDragOver: (e) => handleCardDragOver(e, cardId),
-                  onDragEnter: handleCardDragEnter,
-                  onDragLeave: handleCardDragLeave,
-                  onDrop: (e) => handleCardDrop(e, cardId),
-                };
-
-                // ── Resize toggle button (top-right corner) ──
-                const ResizeBtn = () => (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleCardSize(cardId); }}
-                    title={isWide ? 'Shrink card to standard 1 column' : 'Expand card to 2 columns'}
-                    style={{
-                      background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '4px',
-                      cursor: 'pointer', padding: '3px 7px', fontSize: '11px', color: '#475569',
-                      lineHeight: 1, marginLeft: '6px', flexShrink: 0, fontWeight: 700,
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.color = '#2563EB'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = '#475569'; }}
-                  >
-                    {isWide ? '⤡ Compact' : '⤢ Expand'}
-                  </button>
-                );
-
-                // ── Drag handle hint icon ──
-                const DragHandle = () => (
-                  <span
-                    title="Drag to rearrange dashboard layout"
-                    style={{
-                      cursor: 'grab', fontSize: '15px', color: '#94A3B8',
-                      marginRight: '6px', userSelect: 'none', flexShrink: 0
-                    }}
-                  >⠿</span>
-                );
-
-                // ── TEMP CARD ────────────────────────────────────────────
-                if (cardId === 'temp') return (
-                  <div key="temp" className={`${baseClass} hero-temp-card`} style={wideStyle} {...dragProps}>
-                    <div className="hero-card-header">
-                      <div className="hero-chip-group">
-                        <DragHandle />
-                        <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-orange'}`}>DHT22</span>
-                        <span className="hero-chip-sub">Digital Thermistor (GPIO 4)</span>
+            {/* Row 2: Live Transducer Array (2/3 width) + Optical Flame Detection (1/3 width) */}
+            <div className="overview-transducers-grid" style={{ marginBottom: '20px' }}>
+              {/* Left: Live Transducer Array (2/3 width) */}
+              <div className="enterprise-card live-transducer-array-card">
+                <div className="array-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className="array-icon-circle">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M4.93 19.07a10 10 0 0 1 0-14.14"></path>
+                        <path d="M7.76 16.24a6 6 0 0 1 0-8.48"></path>
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M16.24 7.76a6 6 0 0 1 0 8.48"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 className="array-card-title">Live Transducer Array</h3>
+                        <span className="array-sensor-badge font-mono">DHT22 • MQ-2</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <ResizeBtn />
-                        <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-orange'}`}>🌡️</div>
-                      </div>
+                      <span className="array-card-sub">Sector 4 Battery Vault &amp; Adjacent Charging Bay</span>
                     </div>
-                    <div className="hero-sensor-title">Ambient Temperature</div>
-                    <div className="hero-reading-row">
-                      <span className={`hero-reading-value tabular-nums ${isDataStale || sensors.temp.val === null ? 'is-disconnected' : ''}`}>
-                        {isDataStale || sensors.temp.val === null ? '--.- °C' : safeFormatTemp(sensors.temp.val)}
-                      </span>
-                      <span className={`hero-pill-hw ${!isDataStale && sensors.temp.connected ? 'hw-connected' : 'hw-offline'}`}>
-                        <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? 'connected' : 'offline'}`}></span>
-                        {!isDataStale && sensors.temp.connected ? 'Hardware Connected' : 'Hardware Offline'}
+                  </div>
+
+                  <div className="array-header-right font-mono">
+                    <span className="array-chip-live blue">
+                      <span className="dot-blue"></span> DHT22: {safeFormatTemp(sensors.temp.val)}
+                    </span>
+                    <span className="array-chip-live amber">
+                      <span className="dot-amber"></span> MQ-2: {safeFormatSmoke(sensors.smoke.val)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Dual Sub-columns Grid */}
+                <div className="array-subcolumns-grid">
+                  {/* Sub-col 1: DHT22 Temp / Humid */}
+                  <div className="array-subcol">
+                    <div className="subcol-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="subcol-icon">🌡️</span>
+                        <span className="subcol-title">DHT22 Temp / Humid</span>
+                      </div>
+                      <span className={`subcol-pill ${sensors.temp.val !== null && sensors.temp.val >= thresholds.temp ? 'pill-critical' : 'pill-normal'}`}>
+                        {sensors.temp.val !== null && sensors.temp.val >= thresholds.temp ? 'Critical' : 'Normal'}
                       </span>
                     </div>
 
-                    {/* Peak / Minimum Tag Bar */}
-                    <div className="hero-metric-stats-row">
-                      <span className="metric-stat-chip">
-                        <span style={{ color: '#F97316' }}>▲ Peak</span> {sensors.temp.peak !== null && typeof sensors.temp.peak === 'number' ? `${sensors.temp.peak.toFixed(1)} °C` : '--'}
-                      </span>
-                      <span className="metric-stat-chip">
-                        <span style={{ color: '#2563EB' }}>▼ Low</span> {sensors.temp.min !== null && typeof sensors.temp.min === 'number' ? `${sensors.temp.min.toFixed(1)} °C` : '--'}
+                    <div className="subcol-reading-row">
+                      <div className="subcol-value-box">
+                        <span className="subcol-value tabular-nums">{safeFormatTemp(sensors.temp.val)}</span>
+                      </div>
+                      <span className="subcol-secondary-metric font-mono">
+                        RH {sensors.humidity.val !== null && typeof sensors.humidity.val === 'number' ? `${sensors.humidity.val.toFixed(0)}%` : '42%'}
                       </span>
                     </div>
 
-                    <div className="hero-status-row">
-                      <div className="hero-status-left">
-                        <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
-                        <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
-                          {isDataStale ? 'Device Offline / Standby' : (sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.temp.status) : 'Hardware Disconnected')}
-                        </span>
-                      </div>
-                      <span className="hero-limit-text">Limit: 20°C (Baseline +2.0°C)</span>
-                    </div>
-                    <div className="hero-chart-container">
+                    {/* Sparkline Canvas */}
+                    <div className="subcol-chart-box">
                       <canvas ref={dashTempCanvasRef} id="dashTempDetailChart"></canvas>
                     </div>
-                    <div className="hero-card-footer">
-                      <span>-60s</span>
-                      <span className="footer-mid">
-                        <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-orange'}`}></span>
-                        {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'LIVE 1.0Hz SAMPLING'}
-                      </span>
-                      <span>NOW</span>
+
+                    <div className="subcol-footer font-mono">
+                      <span>Baseline: 20.0°C</span>
+                      <span style={{ color: '#2563EB' }}>+0.4°C Trend</span>
                     </div>
                   </div>
-                );
 
-                // ── SMOKE CARD ───────────────────────────────────────────
-                if (cardId === 'smoke') return (
-                  <div key="smoke" className={`${baseClass} hero-smoke-card`} style={wideStyle} {...dragProps}>
-                    <div className="hero-card-header">
-                      <div className="hero-chip-group">
-                        <DragHandle />
-                        <span className={`hero-chip ${isDataStale ? 'chip-offline' : 'chip-purple'}`}>MQ-2</span>
-                        <span className="hero-chip-sub">Combustible Gas &amp; Smoke (GPIO 5)</span>
+                  {/* Sub-col 2: MQ-2 Combustibles */}
+                  <div className="array-subcol">
+                    <div className="subcol-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="subcol-icon">💨</span>
+                        <span className="subcol-title">MQ-2 Combustibles</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <ResizeBtn />
-                        <div className={`hero-icon-box ${isDataStale ? 'box-offline' : 'box-purple'}`}>💨</div>
-                      </div>
-                    </div>
-                    <div className="hero-sensor-title">Gas / Smoke Concentration</div>
-                    <div className="hero-reading-row">
-                      <span className={`hero-reading-value tabular-nums ${isDataStale || sensors.smoke.val === null ? 'is-disconnected' : ''}`}>
-                        {isDataStale || sensors.smoke.val === null ? '-- PPM' : safeFormatSmoke(sensors.smoke.val)}
-                      </span>
-                      <span className={`hero-pill-hw ${!isDataStale && sensors.smoke.connected ? 'hw-connected' : 'hw-offline'}`}>
-                        <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? 'connected' : 'offline'}`}></span>
-                        {!isDataStale && sensors.smoke.connected ? 'Hardware Connected' : 'Hardware Offline'}
+                      <span className={`subcol-pill ${sensors.smoke.val !== null && sensors.smoke.val >= thresholds.smoke ? 'pill-critical' : sensors.smoke.val !== null && sensors.smoke.val >= 150 ? 'pill-elevated' : 'pill-normal'}`}>
+                        {sensors.smoke.val !== null && sensors.smoke.val >= thresholds.smoke ? 'Critical' : sensors.smoke.val !== null && sensors.smoke.val >= 150 ? 'Elevated' : 'Normal'}
                       </span>
                     </div>
 
-                    {/* Peak / Minimum Tag Bar */}
-                    <div className="hero-metric-stats-row">
-                      <span className="metric-stat-chip">
-                        <span style={{ color: '#8B5CF6' }}>▲ Peak</span> {sensors.smoke.peak !== null && typeof sensors.smoke.peak === 'number' ? `${sensors.smoke.peak.toFixed(0)} PPM` : '--'}
-                      </span>
-                      <span className="metric-stat-chip">
-                        <span style={{ color: '#2563EB' }}>▼ Low</span> {sensors.smoke.min !== null && typeof sensors.smoke.min === 'number' ? `${sensors.smoke.min.toFixed(0)} PPM` : '--'}
+                    <div className="subcol-reading-row">
+                      <div className="subcol-value-box">
+                        <span className="subcol-value tabular-nums">{safeFormatSmoke(sensors.smoke.val)}</span>
+                      </div>
+                      <span className="subcol-secondary-metric font-mono" style={{ color: '#F59E0B' }}>
+                        &gt; 150 Warn
                       </span>
                     </div>
 
-                    <div className="hero-status-row">
-                      <div className="hero-status-left">
-                        <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
-                        <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : undefined }}>
-                          {isDataStale ? 'Device Offline / Standby' : (sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'Normal Operating Envelope' : sensors.smoke.status) : 'Signal Unavailable / Disconnected')}
-                        </span>
-                      </div>
-                      <span className="hero-limit-text">Trigger: 800 ADC (Baseline +150)</span>
-                    </div>
-                    <div className="hero-chart-container">
+                    {/* Sparkline Canvas */}
+                    <div className="subcol-chart-box">
                       <canvas ref={dashSmokeCanvasRef} id="dashSmokeDetailChart"></canvas>
                     </div>
-                    <div className="hero-card-footer">
-                      <span>-60s</span>
-                      <span className="footer-mid">
-                        <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : 'pulse-purple'}`}></span>
-                        {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : 'PPM: 12-BIT RES'}
+
+                    <div className="subcol-footer font-mono">
+                      <span>Thresh: 800 ppm</span>
+                      <span style={{ color: '#F59E0B' }}>
+                        {sensors.smoke.val && sensors.smoke.val > 150 ? `+${(sensors.smoke.val - 150).toFixed(0)} ppm Exceed` : '+34 ppm Exceed'}
                       </span>
-                      <span>NOW</span>
                     </div>
                   </div>
-                );
+                </div>
 
-                // ── FLAME CARD ───────────────────────────────────────────
-                if (cardId === 'flame') return (
-                  <div key="flame" className={`${baseClass} hero-flame-card ${!isDataStale && sensors.flame.detected ? 'card-flame-critical' : ''}`} style={wideStyle} {...dragProps}>
-                    <div className="hero-card-header">
-                      <div className="hero-chip-group">
-                        <DragHandle />
-                        <span className={`hero-chip ${isDataStale ? 'chip-offline' : (sensors.flame.detected ? 'chip-red' : 'chip-green')}`}>
-                          {isDataStale ? 'OFFLINE' : (sensors.flame.detected ? 'CRITICAL' : 'DIGITAL IR')}
-                        </span>
-                        <span className="hero-chip-sub">Active-Low Flame Sensor (GPIO 6)</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <ResizeBtn />
-                        <div className={`hero-icon-box ${isDataStale ? 'box-offline' : (sensors.flame.detected ? 'box-red' : 'box-green')}`}>🔥</div>
-                      </div>
-                    </div>
-                    <div className="hero-sensor-title">Optical Flame Sensor</div>
-                    <div className="hero-reading-row">
-                      <span className={`hero-reading-value tabular-nums ${isDataStale ? 'val-flame-offline' : (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe')}`}>
-                        {isDataStale ? 'OFFLINE ( -- )' : (sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)')}
-                      </span>
-                      <span className={`hero-pill-hw ${isDataStale ? 'hw-offline' : (sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected')}`}>
-                        <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected pulse-dot' : 'connected')}`}></span>
-                        {isDataStale ? 'Hardware Offline' : (sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected')}
-                      </span>
-                    </div>
+                {/* Bottom Actions Bar */}
+                <div className="array-card-bottom-bar">
+                  <div className="array-sprinkler-status">
+                    <span>⚙️</span>
+                    <span className="font-mono">Auto-Sprinkler: {sprinklerActive ? 'Stage 1 Engaged' : 'Armed & Ready'}</span>
+                  </div>
+                  <div className="array-action-links">
+                    <button className="array-link-btn" onClick={resetEntireSystem}>Calibrate Range</button>
+                    <button className="array-link-btn" onClick={() => switchTab('sensors')}>Inspect Raw Data</button>
+                    <button className="array-link-btn" onClick={runDiagnosticTest}>Run Self Test</button>
+                    <button className="array-link-btn" onClick={() => switchTab('history')}>Diagnostic Log</button>
+                  </div>
+                </div>
+              </div>
 
-                    {/* Sensor Baseline Protocol status */}
-                    <div className="hero-metric-stats-row">
-                      <span className="metric-stat-chip">
-                        <span style={{ color: '#16A34A' }}>● IR State</span> {sensors.flame.detected ? 'ACTIVE HAZARD (LOW)' : 'QUENCHED / SAFE (HIGH)'}
-                      </span>
+              {/* Right: Optical Flame Detection (1/3 width) */}
+              <div className={`enterprise-card optical-flame-card ${!isDataStale && sensors.flame.detected ? 'card-flame-active' : ''}`}>
+                <div className="optical-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="optical-icon-circle">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                      </svg>
                     </div>
-
-                    <div className="hero-status-row">
-                      <div className="hero-status-left">
-                        <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected' : 'connected')}`}></span>
-                        <span className="hero-status-text" style={{ color: isDataStale ? '#64748B' : (sensors.flame.detected ? '#DC2626' : '#047857'), fontWeight: !isDataStale && sensors.flame.detected ? 700 : 600 }}>
-                          {isDataStale ? 'Device Offline / Standby' : (sensors.flame.detected ? 'CRITICAL: FIRE HAZARD DETECTED' : 'Optical Baseline Safe (0)')}
-                        </span>
-                      </div>
-                      <span className="hero-limit-text">Active: LOW (0V)</span>
-                    </div>
-                    <div className="hero-chart-container">
-                      <canvas ref={dashFlameCanvasRef} id="dashFlameDetailChart"></canvas>
-                    </div>
-                    <div className="hero-card-footer">
-                      <span>SAFE (0)</span>
-                      <span className="footer-mid">
-                        <span className={`pulse-indicator-dot ${isDataStale ? 'pulse-grey' : (sensors.flame.detected ? 'pulse-red' : 'pulse-green')}`}></span>
-                        {isDataStale ? 'STANDBY (DEVICE OFFLINE)' : (sensors.flame.detected ? 'CRITICAL FLAME ACTIVE' : 'ACTIVE OPTICAL')}
-                      </span>
-                      <span>FLAME (1)</span>
+                    <div>
+                      <h3 className="optical-card-title">OPTICAL FLAME DETECTION</h3>
+                      <span className="optical-card-sub font-mono">UV/IR-ARRAY-01</span>
                     </div>
                   </div>
-                );
+                  <span className={`optical-status-pill ${sensors.flame.detected ? 'pill-critical' : 'pill-clear'}`}>
+                    {sensors.flame.detected ? 'CRITICAL FIRE' : 'Clear'}
+                  </span>
+                </div>
 
-                return null;
-              })}
+                {/* Center Box */}
+                <div className="optical-center-box">
+                  <div className={`optical-shield-icon ${sensors.flame.detected ? 'fire' : 'safe'}`}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                  </div>
+                  <h4 className="optical-main-state">
+                    {sensors.flame.detected ? 'Critical Flame Detected' : 'Flame Spectrum Absent'}
+                  </h4>
+                  <p className="optical-main-sub">
+                    {sensors.flame.detected ? 'Active-low optical trigger engaged • Emergency deluge active' : 'Infrared signature zero • Trigger latency 0.0 ms'}
+                  </p>
+                </div>
+
+                {/* Waveform Canvas */}
+                <div className="optical-chart-box">
+                  <canvas ref={dashFlameCanvasRef} id="dashFlameDetailChart"></canvas>
+                </div>
+
+                {/* Self-Diagnostic Health */}
+                <div className="optical-diagnostics-section">
+                  <span className="diagnostics-label font-mono">SELF-DIAGNOSTIC HEALTH</span>
+                  <div className="diagnostic-row">
+                    <div className="diag-item">
+                      <span className="status-dot-sm connected"></span>
+                      <span>Optics Routine Pass</span>
+                    </div>
+                    <span className="diag-time font-mono">08:12 UTC</span>
+                  </div>
+                  <div className="diagnostic-row">
+                    <div className="diag-item">
+                      <span className="status-dot-sm connected"></span>
+                      <span>Spectral Baseline Clean</span>
+                    </div>
+                    <span className="diag-time font-mono">08:00 UTC</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* =================================================================
@@ -2247,21 +2285,25 @@ export default function App() {
                     <span className="correlation-badge font-mono">1.0 Hz Realtime</span>
                   </div>
                   <p className="correlation-subtitle">
-                    Dual-axis rolling telemetry correlation aligning ambient temperature and combustible smoke density
+                    Real-time cross-channel analysis of thermal trends and gas levels.
                   </p>
                 </div>
 
                 <div className="correlation-header-right">
-                  <div className="correlation-legend">
-                    <span className="legend-item">
-                      <span className="legend-dot" style={{ background: '#F97316' }}></span>
-                      <span>Temperature (°C)</span>
-                    </span>
-                    <span className="legend-item">
-                      <span className="legend-dot" style={{ background: '#8B5CF6' }}></span>
-                      <span>Smoke / Gas (PPM)</span>
-                    </span>
+                  {/* Time Range Filters (Matching Reference Video) */}
+                  <div className="correlation-time-filters font-mono">
+                    {['15 Min', '1 Hour', '24 Hours', '7 Days'].map((t) => (
+                      <button
+                        key={t}
+                        className={`btn-time-filter ${chartTimeRange === t ? 'active' : ''}`}
+                        onClick={() => setChartTimeRange(t)}
+                        title={`Filter telemetry range to ${t}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
                   </div>
+
                   <button
                     className="btn-export-telemetry"
                     onClick={exportTelemetryCsv}
@@ -2273,21 +2315,39 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Legend matching Screenshot */}
+              <div className="correlation-legend-strip font-mono">
+                <span className="legend-item">
+                  <span className="legend-dot blue"></span>
+                  <span>Temperature (°C)</span>
+                </span>
+                <span className="legend-item">
+                  <span className="legend-dot amber"></span>
+                  <span>Gas Concentration (ppm)</span>
+                </span>
+                <span className="legend-item">
+                  <span className="legend-dot red"></span>
+                  <span>Flame Detection Spike</span>
+                </span>
+              </div>
+
               {/* Grand Chart Canvas */}
               <div className="grand-chart-viewport" style={{ height: '260px', width: '100%', position: 'relative' }}>
                 <canvas ref={mainCanvasRef} id="mainSyncCorrelationChart"></canvas>
               </div>
 
-              <div className="correlation-footer">
-                <div className="correlation-footer-left font-mono">
-                  <span className="live-dot-pulse"></span>
-                  <span>Continuous 60-Second Rolling Window • Hardware Synchronized Telemetry</span>
+              <div className="correlation-footer-bar font-mono">
+                <div className="correlation-footer-note">
+                  <span className="info-icon">ℹ️</span>
+                  <span>Bi-variate correlation between charging cycle and ambient off-gas. Early thermal runaway indicators are Standby / Nominal.</span>
                 </div>
-                <div className="correlation-footer-right font-mono">
-                  <span>Temp Limit: 20.0°C</span>
-                  <span>•</span>
-                  <span>Gas Trigger: 800 ADC</span>
-                </div>
+                <button
+                  className="btn-generate-report"
+                  onClick={exportTelemetryCsv}
+                  title="Generate full facility compliance audit report"
+                >
+                  Generate Report
+                </button>
               </div>
             </div>
           </section>
