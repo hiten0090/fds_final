@@ -1,0 +1,237 @@
+================================================================================
+FIREGUARD PRO - IOT DIGITAL TWIN FIRE SAFETY & EMERGENCY COMMAND CENTER
+COMPLETE ARCHITECTURE, HARDWARE SPECS, DATABASE SCHEMA & CODEBASE BLUEPRINT
+================================================================================
+File: understand_txt.txt (Alias of understand.txt)
+Project: FireGuard Pro (IoT Smart Fire Detection & Operations)
+Repository: https://github.com/hiten0090/fds_final (Branch: main)
+Deployment: Netlify CI/CD connected to GitHub
+Firmware File: esp32_firmware/esp32_firmware.ino
+
+[INSTRUCTIONS FOR ANY AI ASSISTANT READING THIS DOCUMENT]
+This file contains the definitive, complete truth about this project.
+Read this entire document before answering questions or proposing code changes.
+DO NOT fabricate hardware pinouts, database column names, or detection thresholds.
+Follow the exact conventions, schema, and rules detailed below.
+
+================================================================================
+1. PROJECT OVERVIEW & EXECUTIVE SUMMARY
+================================================================================
+FireGuard Pro is an enterprise-grade IoT Fire Hazard Monitoring, Digital Twin 
+Facility Dashboard, and Emergency Operations Command System. It is designed for 
+factories, server rooms, commercial buildings, and smart facilities.
+
+Key Highlights:
+1. Zero-Latency Local Edge Fail-Safe:
+   The physical microcontroller (ESP32-S3) triggers the hardware alarm siren relay
+   locally (0ms latency), independent of Wi-Fi or cloud status.
+2. Cloud Real-Time Telemetry:
+   Telemetry streams every 1.0s via HTTPS REST POST to Supabase Cloud Database.
+   The frontend connects via WebSockets (Supabase Realtime) for sub-second updates.
+3. Smart Hardware Offline Detection:
+   When the ESP32 is powered off or unplugged (>15 seconds without packets), the 
+   dashboard gracefully displays "Hardware Offline (Standby)", clears old sensor 
+   readings to "--.-", prevents stale records from triggering false alarms, and 
+   turns off fake wave animations.
+4. Emergency Protocol:
+   Upon confirmed fire (Multi-sensor AND logic OR Manual Override), the system triggers:
+   - Fullscreen Red Emergency Evacuation Modal
+   - Web Audio API dual-tone synthesized evacuation siren
+   - Priority ESP32-CAM video surveillance stream
+   - Incident logging and 1-Click WhatsApp / SMS emergency dispatch
+
+================================================================================
+2. HARDWARE SPECIFICATIONS & PINOUT (ESP32-S3 N16R8)
+================================================================================
+Microcontroller: ESP32-S3 N16R8 (16MB Flash, 8MB PSRAM, Dual-Core 240MHz, 2.4GHz Wi-Fi)
+
+Hardware Pin Map:
+--------------------------------------------------------------------------------
+Pin Name      GPIO    Interface     Component & Functional Details
+--------------------------------------------------------------------------------
+DHT_PIN       GPIO 4  Digital In    DHT22 (AM2302) Temperature & Humidity Sensor
+                                    - Sampling interval: 2000ms rate limit
+                                    - Temperature Range: -40°C to +85°C (±0.5°C)
+                                    - Humidity Range: 0% to 100% RH (±2%)
+
+MQ2_PIN       GPIO 5  Analog In     MQ-2 Combustible Gas & Smoke Sensor (AO Pin)
+                                    - ESP32 12-bit ADC (0 to 4095 levels)
+                                    - 5x oversampled in code for noise reduction
+                                    - Detects LPG, Propane, Methane, Smoke, Alcohol
+
+FLAME_PIN     GPIO 6  Digital In    Optical IR Flame Sensor Module (DO Pin)
+                      (PULLUP)      - Active-LOW logic:
+                                      * LOW (0V)  = FIRE / FLAME DETECTED
+                                      * HIGH (3.3V) = NORMAL / CLEAR / SAFE
+                                    - 760nm - 1100nm infrared optical detection
+
+BUZZER_PIN    GPIO 7  Digital Out   Emergency Siren Relay / Active Piezo Buzzer
+                                    - Active-HIGH logic (#define BUZZER_ACTIVE HIGH)
+                                    - Trips local evacuation buzzer upon confirmed fire
+
+WIFI_SSID:     "HITEN"
+WIFI_PASSWORD: "123456789"
+--------------------------------------------------------------------------------
+
+================================================================================
+3. SENSOR CALIBRATION, BASELINES & DETECTION THRESHOLDS
+================================================================================
+A. Calibration Period (First 15 Seconds from Boot):
+   - During the first 15 seconds (`CALIBRATION_DURATION = 15000`), the ESP32
+     samples ambient room conditions to calculate baseline averages:
+     * `tempBaseline`: Average room temperature (default fallback: 25.0 °C)
+     * `gasBaseline`: Average room air ADC (default fallback: 350 ADC)
+   - Baseline ready flag is set (`baselineReady = true`).
+
+B. Sensor Alert Thresholds:
+   -----------------------------------------------------------------------------
+   Sensor       Alert Condition                               Card Display
+   -----------------------------------------------------------------------------
+   Temperature  Temperature >= 20.0 °C  OR                    "Limit: 20°C
+   (DHT22)      Temperature >= (tempBaseline + 2.0 °C)         (Baseline +2.0°C)"
+                -> Sets `temperature_alert = true`
+
+   Smoke / Gas  gasValue >= 800 ADC  OR                       "Trigger: 800 ADC
+   (MQ-2)       gasValue >= (gasBaseline + 150 ADC)            (Baseline +150)"
+                -> Sets `gas_alert = true`
+                * If ADC < 35, sensor is marked disconnected (`gas_state = false`)
+
+   Flame Sensor digitalRead(GPIO 6) == LOW (0V)               "Active: LOW (0V)"
+   (Optical IR) -> Sets `flame_alert = true`
+                -> Sets `flame_state = 1` (CRITICAL)
+                * When HIGH (3.3V) -> `flame_state = 0` (CLEAR / SAFE)
+   -----------------------------------------------------------------------------
+
+C. Multi-Sensor Emergency Siren (Buzzer) Activation Rule:
+   In ESP32 firmware:
+   ```cpp
+   if (temperatureAlert && gasAlert && flameAlert) {
+       buzzerState = true;
+       digitalWrite(BUZZER_PIN, HIGH);
+   } else {
+       buzzerState = false;
+       digitalWrite(BUZZER_PIN, LOW);
+   }
+   ```
+   * All 3 hazards must be present simultaneously to trip the automated siren:
+     (Temperature Spike + Smoke Spike + Optical Flame Detected).
+   * This strictly prevents false alarms from isolated sunlight or brief vapor.
+
+================================================================================
+4. CLOUD DATABASE SCHEMA (SUPABASE POSTGRESQL)
+================================================================================
+Database Platform: Supabase Cloud (PostgreSQL)
+Endpoint: https://zylrxdvbrzgjejfsqryi.supabase.co/rest/v1/sensor_data
+Public Client Anon Key:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bHJ4ZHZicnpnamVqZnNxcnlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTUyMzMsImV4cCI6MjEwMDM5MTIzM30.nxT6DWWQDPBUIU59QY27rrLvveD1-ZoACjLMcx0tWe4
+
+Table Name: `sensor_data`
+Exact 11 Columns Schema:
+--------------------------------------------------------------------------------
+Column Name        Type         Nullable  Description
+--------------------------------------------------------------------------------
+id                 int8         NO        Auto-incrementing Primary Key
+created_at         timestamptz  YES       Timestamp of packet (Default: now())
+temperature        numeric      YES       Ambient Temperature in °C (e.g. 26.5)
+humidity           numeric      YES       Relative Humidity % (e.g. 55.2)
+gas_value          int4         YES       MQ-2 Raw ADC value (0-4095, e.g. 648)
+flame_state        int4         YES       1 = Flame Detected (CRITICAL), 0 = Safe
+temperature_alert  bool         YES       true if Temp >= 20.0 or Baseline + 2.0
+gas_alert          bool         YES       true if Gas >= 800 or Baseline + 150
+flame_alert        bool         YES       true if Flame Detected (GPIO 6 is LOW)
+buzzer             bool         YES       true if Emergency Siren is sounding
+gas_state          bool         YES       true if MQ-2 is connected and functional
+--------------------------------------------------------------------------------
+
+CRITICAL SCHEMA RULE FOR AI:
+Do NOT query or insert columns like `flame_sensor_state` or `fire_status` directly 
+into the `sensor_data` table. Only use the 11 verified columns listed above.
+
+================================================================================
+5. FRONTEND ARCHITECTURE & CODEBASE STRUCTURE
+================================================================================
+Framework: React 18 + Vite (SPA)
+Main CSS: src/index.css (Enterprise Dark/Light Modern Industrial Theme)
+Entry File: src/main.jsx -> src/App.jsx
+
+Key Directories & Files:
+--------------------------------------------------------------------------------
+Path                                Description
+--------------------------------------------------------------------------------
+src/App.jsx                         Main dashboard container: views, telemetry state,
+                                    emergency protocol, chart tickers, sound triggers.
+src/lib/supabase.js                 Supabase client initialization with built-in
+                                    safe fallback credentials for Netlify builds.
+src/services/sensorService.js       Database mapper, REST fetch, and Realtime WebSocket
+                                    subscriber (`postgres_changes` on `sensor_data`).
+src/services/AudioService.js        Web Audio API dual-tone siren synthesizer.
+src/services/smsService.js          Automated emergency SMS dispatch handler.
+src/services/locationService.js     Facility GPS coordinates and Maps navigation generator.
+src/components/EmergencyBanner.jsx  Top emergency warning banner component.
+src/components/EmergencyPopup.jsx   Fullscreen modal on confirmed fire hazard.
+src/components/FacilityLocationCard.jsx Geolocation dispatch card & Google Maps link.
+src/components/SmsAlertCard.jsx     Emergency SMS dispatch interface.
+src/components/WorldMapVisualizer.jsx Visual radar map for facility coordinates.
+esp32_firmware/esp32_firmware.ino   Complete production-ready C++ code for ESP32-S3.
+--------------------------------------------------------------------------------
+
+Frontend Views & Navigation:
+1. Overview Tab (`overview`):
+   - 3 Top Hero Sensor Cards (Ambient Temperature, Gas/Smoke, Optical Flame)
+   - Real-time sparkline telemetry wave charts (Chart.js)
+   - ESP32-CAM Tactical Surveillance Viewport
+   - Facility Geolocation Radar & First Responder Routing
+   - Emergency SMS Dispatch Panel
+   - Manual Emergency Override Button
+2. Camera Surveillance Tab (`live`):
+   - Fullscreen camera stream viewport with retry backoff and FOV overlays.
+3. Sensor Analytics Tab (`sensors`):
+   - Detailed expanded historical charts for Temperature, Smoke, and Flame with 
+     time axis, grid lines, and interactive hover tooltips.
+4. Event History Tab (`history`):
+   - Incident summary logs of triggered safety events.
+   - Raw database table dumps were removed for clean UI aesthetics.
+5. Settings Tab (`settings`):
+   - Facility GPS configuration, SMS recipient lists, audio test, hardware health.
+
+================================================================================
+6. SMART OFFLINE & DEMO DATA POLICIES
+================================================================================
+A. Honest Offline Mode:
+   - If no packet arrives from ESP32 for >15 seconds (`diffSeconds > 15`):
+     * `isDataStale` becomes `true`.
+     * Temperature reading shows: `--.- °C`
+     * Smoke reading shows: `-- PPM`
+     * Flame reading shows: `OFFLINE ( -- )`
+     * Hardware pills display: `Hardware Offline` (neutral grey/amber dot).
+     * Status rows display: `Device Offline / Standby` (no false `CRITICAL` alarms).
+     * Header badge displays: `HARDWARE OFFLINE (STANDBY)`.
+     * Old/historical rows in Supabase NEVER trigger emergency sirens when offline.
+
+B. No Fake Sine-Wave Oscillations:
+   - When the hardware is offline, all graphs flatline at neutral 0.
+   - Fake `Math.sin()` / `Math.cos()` wave generators were eliminated.
+   - When live, graphs track real, unfiltered hardware values directly.
+
+C. When ESP32 Powers ON:
+   - In <1 second, incoming packet sets `isDataStale = false`.
+   - Cards instantly turn to green `Hardware Connected`.
+   - Real telemetry streams live into charts and cards.
+   - If fire is present (`flame_state == 1`), Flame Card turns `🔥 CRITICAL (1)` 
+     with a pulsing red aura.
+
+================================================================================
+7. COMMON PITFALLS & GUARDRAILS FOR FUTURE AI ASSISTANTS
+================================================================================
+1. DO NOT add `flame_sensor_state` to Supabase:
+   The user's database does not have this column. Only use `flame_state` (0 or 1).
+2. DO NOT delete the fallback credentials in `src/lib/supabase.js`:
+   Netlify CI/CD needs the inline fallback credentials to prevent build crashes.
+3. DO NOT re-introduce fake sine-wave chart updates:
+   The user explicitly requested real data when live and flat 0 when offline.
+4. DO NOT make Flame Sensor show "Hardware Connected" when the device is offline:
+   All 3 sensor cards must show "Hardware Offline" when the ESP32 is powered off.
+5. PRESERVE Git & Netlify Workflow:
+   Whenever files in `src/` or `esp32_firmware/` are modified, build with `npm run build` 
+   and commit/push to `origin main` so Netlify automatically updates the live website.
+================================================================================
