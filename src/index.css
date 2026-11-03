@@ -1,5 +1,6 @@
 /* index.css - FireGuard Modern Industrial IoT Theme (Clean Executive Light Reference Style) */
 @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Rajdhani:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap');
 
 :root {
   /* ==========================================================================
@@ -3629,4 +3630,368 @@ body.popup-open {
   .header-time-block {
     display: none;
   }
+}
+
+
+
+/* ==========================================================================
+   22. FLAT / SHARP UI REDESIGN OVERRIDES
+   Applied: Remove glassmorphism, box-shadows/glow on cards, large border-radius.
+   Use strict 4px radius, tabular-nums, 1px solid #D1D5DB borders, Inter/Fira Code.
+   All app logic, state, IDs, functions are UNTOUCHED.
+   ========================================================================== */
+
+/* ── Utility ─────────────────────────────────────────────────────────────── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* ── Body / Background ────────────────────────────────────────────────────── */
+body {
+  background-color: #F7F9FD !important;
+}
+
+.app-container {
+  background-color: #F7F9FD !important;
+}
+
+/* ── Top Header: Remove blur/glassmorphism ───────────────────────────────── */
+.top-header {
+  background-color: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid #D1D5DB !important;
+}
+
+/* ── Sidebar: Flat, no shadows ───────────────────────────────────────────── */
+.app-sidebar {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid #D1D5DB !important;
+  box-shadow: none !important;
+}
+
+.brand-icon-wrapper {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* Sidebar nav button: flat, no gradient, no glow, no translateX */
+.sidebar-btn {
+  border-radius: 4px !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+.sidebar-btn:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+.sidebar-btn.active {
+  background: #EFF6FF !important;
+  color: #0051D5 !important;
+  font-weight: 600 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  animation: none !important;
+  border-radius: 4px !important;
+}
+
+/* Active left indicator: 3px solid blue line */
+.sidebar-btn.active::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 3px !important;
+  height: 60% !important;
+  background: #0051D5 !important;
+  border-radius: 0 2px 2px 0 !important;
+  box-shadow: none !important;
+}
+
+.sidebar-btn.active svg {
+  color: #0051D5 !important;
+  stroke: currentColor !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+.sidebar-btn:active {
+  transform: none !important;
+}
+
+/* Sidebar badge in active: no blur */
+.sidebar-btn.active .sidebar-badge {
+  backdrop-filter: none !important;
+}
+
+/* Sidebar credits card: flat */
+.sidebar-credits-card {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.sidebar-gateway-bar {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* ── All Cards: Flat sharp design ─────────────────────────────────────────── */
+.enterprise-card,
+.hero-sensor-card,
+.sensor-detail-card,
+.facility-location-card,
+.sms-alert-card,
+.controls-panel,
+.camera-feed-card,
+.incident-card-enterprise,
+.audit-logs-card,
+.dedicated-camera-card,
+.settings-diagnostics-card,
+.backend-data-table-card {
+  border-radius: 6px !important;
+  border: 1px solid #D1D5DB !important;
+  box-shadow: none !important;
+  background: #FFFFFF !important;
+}
+
+/* Card hover: only very subtle shadow, NO translateY lift, NO scale */
+.enterprise-card:hover,
+.enterprise-card.tile-visible:hover,
+.hero-sensor-card:hover,
+.hero-sensor-card.tile-visible:hover,
+.sensor-detail-card:hover,
+.sensor-detail-card.tile-visible:hover,
+.facility-location-card:hover,
+.facility-location-card.tile-visible:hover,
+.sms-alert-card:hover,
+.sms-alert-card.tile-visible:hover,
+.controls-panel:hover,
+.controls-panel.tile-visible:hover,
+.camera-feed-card:hover,
+.camera-feed-card.tile-visible:hover,
+.incident-card-enterprise:hover,
+.incident-card-enterprise.tile-visible:hover,
+.audit-logs-card:hover,
+.audit-logs-card.tile-visible:hover,
+.dedicated-camera-card:hover,
+.dedicated-camera-card.tile-visible:hover,
+.settings-diagnostics-card:hover,
+.settings-diagnostics-card.tile-visible:hover,
+.backend-data-table-card:hover,
+.backend-data-table-card.tile-visible:hover {
+  transform: none !important;
+  box-shadow: 0px 4px 6px -1px rgba(16, 23, 20, 0.06) !important;
+  border-color: #9CA3AF !important;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease !important;
+}
+
+/* Incident card override: keep red border on hover but no lift */
+.incident-card-enterprise:hover,
+.incident-card-enterprise.tile-visible:hover {
+  border-color: #EF4444 !important;
+  box-shadow: 0px 4px 6px -1px rgba(239, 68, 68, 0.08) !important;
+}
+
+/* Camera card override */
+.dedicated-camera-card:hover,
+.dedicated-camera-card.tile-visible:hover,
+.camera-feed-card:hover,
+.camera-feed-card.tile-visible:hover {
+  border-color: #9CA3AF !important;
+  box-shadow: 0px 4px 6px -1px rgba(16, 23, 20, 0.06) !important;
+}
+
+/* Audit / settings card override */
+.audit-logs-card:hover,
+.audit-logs-card.tile-visible:hover,
+.settings-diagnostics-card:hover,
+.settings-diagnostics-card.tile-visible:hover,
+.backend-data-table-card:hover,
+.backend-data-table-card.tile-visible:hover {
+  border-color: #9CA3AF !important;
+  box-shadow: 0px 4px 6px -1px rgba(16, 23, 20, 0.06) !important;
+}
+
+/* ── Card top accent lines: keep colored, flat ───────────────────────────── */
+.hero-temp-card,
+.temp-accent-card {
+  border-top: 3px solid #F97316 !important;
+}
+
+.hero-smoke-card,
+.smoke-accent-card {
+  border-top: 3px solid #8B5CF6 !important;
+}
+
+.hero-flame-card,
+.flame-accent-card {
+  border-top: 3px solid #10B981 !important;
+}
+
+/* ── hero-icon-box: no hover spin/scale ──────────────────────────────────── */
+.hero-sensor-card:hover .hero-icon-box {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.hero-icon-box {
+  border-radius: 4px !important;
+}
+
+/* ── Box variants: flat borders ──────────────────────────────────────────── */
+.box-orange { border-radius: 4px !important; }
+.box-purple { border-radius: 4px !important; }
+.box-green  { border-radius: 4px !important; }
+.box-red    { box-shadow: none !important; border-radius: 4px !important; }
+
+/* ── Critical flame: keep alert border but remove glow ───────────────────── */
+.card-flame-critical {
+  border-color: #EF4444 !important;
+  box-shadow: none !important;
+  animation: criticalBorderPulse-flat 2s infinite ease-in-out;
+}
+
+@keyframes criticalBorderPulse-flat {
+  0%, 100% { border-color: #EF4444; }
+  50%       { border-color: #DC2626; }
+}
+
+/* ── Numeric reading values: Fira Code + tabular-nums ────────────────────── */
+.hero-reading-value,
+.sensor-meta-val {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: 'tnum' !important;
+}
+
+/* ── hero-sensor-title: no translateX on hover ───────────────────────────── */
+.hero-sensor-card:hover .hero-sensor-title {
+  transform: none !important;
+}
+
+/* ── hero-reading-value: no scale on hover ───────────────────────────────── */
+.hero-sensor-card:hover .hero-reading-value {
+  transform: none !important;
+}
+
+/* ── Disconnected value: flat, no gradient ───────────────────────────────── */
+.hero-reading-value.is-disconnected {
+  background: #FEF2F2 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* ── Page section animation: keep fade, remove translateY for flat feel ──── */
+@keyframes pageSectionSlideUp-flat {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.page-section.active {
+  animation: pageSectionSlideUp-flat 0.3s ease forwards !important;
+}
+
+/* ── Sidebar item slide-in: no translateX ────────────────────────────────── */
+@keyframes sidebarItemSlideIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Header pill: flat borders, no hover scale ───────────────────────────── */
+.header-live-status-pill:hover {
+  transform: none !important;
+}
+
+.header-action-btn:hover {
+  transform: none !important;
+}
+
+.header-icon-badge {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* ── Safety matrix rows: flat border-radius ──────────────────────────────── */
+.safety-matrix-row {
+  border-radius: 4px !important;
+}
+
+/* ── Rack node chip: flat ────────────────────────────────────────────────── */
+.rack-node-chip {
+  border-radius: 4px !important;
+}
+
+.rack-node-chip:hover {
+  transform: none !important;
+}
+
+/* ── System status item: flat ────────────────────────────────────────────── */
+.system-status-item {
+  border-radius: 4px !important;
+}
+
+/* ── Sensor node mini: flat ──────────────────────────────────────────────── */
+.sensor-node-mini {
+  border-radius: 4px !important;
+}
+
+/* ── Buttons: flat, no hover lift ────────────────────────────────────────── */
+.btn-enterprise {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.btn-enterprise:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── navActiveGlow animation: disabled ───────────────────────────────────── */
+@keyframes navActiveGlow {
+  0%, 50%, 100% {
+    box-shadow: none;
+  }
+}
+
+/* ── card-heading-sm on hover: no translate ──────────────────────────────── */
+.enterprise-card:hover .card-heading-sm {
+  transform: none !important;
+}
+
+/* ── credits member: no translateY ──────────────────────────────────────── */
+.credits-member:hover {
+  transform: none !important;
+}
+
+/* ── sidebar btn label: no transform on hover ────────────────────────────── */
+.sidebar-btn:hover .sidebar-btn-label {
+  transform: none !important;
+}
+
+/* ── sidebar contextual icon animations: disabled ────────────────────────── */
+.sidebar-btn[data-nav="overview"]:hover svg,
+.sidebar-btn[data-nav="camera"]:hover svg,
+.sidebar-btn[data-nav="sensors"]:hover svg,
+.sidebar-btn[data-nav="history"]:hover svg,
+.sidebar-btn[data-nav="settings"]:hover svg {
+  transform: none !important;
+}
+
+/* ── badge: no scale on hover ────────────────────────────────────────────── */
+.sidebar-btn:hover .sidebar-badge {
+  transform: none !important;
+}
+
+/* ── controls panel hover: remove glow ───────────────────────────────────── */
+.controls-panel:hover,
+.controls-panel.tile-visible:hover {
+  border-color: #9CA3AF !important;
 }
