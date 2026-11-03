@@ -4031,3 +4031,291 @@ body {
 }
 
 /* Resize button hover handled inline; no extra specificity needed */
+
+/* ==========================================================================
+   24. ENTERPRISE INDUSTRIAL DASHBOARD ENHANCEMENTS
+   Collapsible Sidebar, Interactive Header Ribbon, Micro-Metrics & Grid Layout
+   ========================================================================== */
+
+/* ── Collapsible Sidebar (Desktop) ────────────────────────────────────────── */
+.app-sidebar {
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.app-sidebar.collapsed {
+  width: 68px !important;
+  padding: 16px 8px !important;
+}
+
+.app-main {
+  transition: margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.app-main.sidebar-collapsed {
+  margin-left: 68px !important;
+}
+
+.sidebar-collapse-toggle {
+  background: transparent;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  color: #64748B;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-collapse-toggle:hover {
+  background: #F1F5F9;
+  color: #1E293B;
+  border-color: #CBD5E1;
+}
+
+.app-sidebar.collapsed .sidebar-brand {
+  justify-content: center;
+  padding: 0 0 14px 0;
+}
+
+.app-sidebar.collapsed .sidebar-collapse-toggle {
+  margin-left: 0;
+  margin-top: 8px;
+}
+
+.app-sidebar.collapsed .sidebar-btn {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.app-sidebar.collapsed .sidebar-btn svg {
+  margin: 0;
+}
+
+/* ── Mobile Hamburger Toggle ──────────────────────────────────────────────── */
+.header-mobile-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  padding: 6px;
+  color: #334155;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.header-mobile-toggle:hover {
+  background: #F1F5F9;
+}
+
+@media (max-width: 768px) {
+  .header-mobile-toggle {
+    display: inline-flex !important;
+  }
+}
+
+/* ── Header Sub-Path & System Pills ───────────────────────────────────────── */
+.header-sub-path {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #64748B;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+.header-system-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: var(--font-tactical);
+  letter-spacing: 0.04em;
+  margin-left: 14px;
+}
+
+.header-system-pill.normal {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+
+.header-system-pill.warning {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.header-system-pill.emergency {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  animation: pulseAlert 1.5s infinite;
+}
+
+.header-system-pill.unavailable {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+.status-dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-pulse.normal {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+
+.status-dot-pulse.warning {
+  background: #F59E0B;
+}
+
+.status-dot-pulse.emergency {
+  background: #EF4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.9);
+}
+
+.status-dot-pulse.unavailable {
+  background: #94A3B8;
+}
+
+/* ── Supabase Channel Pill in Header ──────────────────────────────────────── */
+.header-channel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 9999px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: #334155;
+}
+
+.channel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.channel-dot.online {
+  background: #16A34A;
+  box-shadow: 0 0 5px rgba(22, 163, 74, 0.6);
+}
+
+.channel-dot.offline {
+  background: #F59E0B;
+}
+
+/* ── Quick Tactical Telemetry Ribbon ──────────────────────────────────────── */
+.overview-telemetry-ribbon {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ribbon-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ribbon-label {
+  font-family: var(--font-tactical);
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ribbon-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.ribbon-value.active-relay {
+  color: #2563EB;
+}
+
+.ribbon-divider {
+  width: 1px;
+  height: 24px;
+  background: #E2E8F0;
+}
+
+@media (max-width: 900px) {
+  .ribbon-divider {
+    display: none;
+  }
+}
+
+/* ── Hero Metric Stats Row (Peak & Min Tags) ──────────────────────────────── */
+.hero-metric-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0 5px 0;
+  flex-wrap: wrap;
+}
+
+.metric-stat-chip {
+  background: #F8FAFD;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: #334155;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Responsive Grid Breakpoints for Hero Sensor Cards ────────────────────── */
+@media (max-width: 1100px) {
+  .hero-sensors-draggable {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-sensors-draggable {
+    grid-template-columns: 1fr !important;
+  }
+  .hero-sensors-draggable > [style*="span 2"] {
+    grid-column: span 1 !important;
+  }
+  .header-system-pill {
+    display: none;
+  }
+  .header-channel-pill {
+    display: none;
+  }
+}

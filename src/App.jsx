@@ -10,6 +10,7 @@ import DigitalTwinFacility from './components/DigitalTwinFacility';
 import FacilityLocationCard from './components/FacilityLocationCard';
 import LocationConfigModal from './components/LocationConfigModal';
 import SmsAlertCard from './components/SmsAlertCard';
+import BackendDataTable from './components/BackendDataTable';
 import { locationService } from './services/locationService';
 import { smsService } from './services/smsService';
 
@@ -163,8 +164,10 @@ export default function App() {
   const [incidentStage, setIncidentStage] = useState(0);
   const drillTimerRef = useRef(null);
 
-  // Mobile sidebar toggle
+  // Mobile sidebar & Desktop collapse toggle
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [historyTabMode, setHistoryTabMode] = useState('incidents'); // 'incidents' | 'live_table'
 
   // Canvas and Chart Refs
   const mainCanvasRef = useRef(null);
@@ -1350,32 +1353,51 @@ export default function App() {
   return (
     <div className={`app-container ${isFireActive ? 'emergency-mode' : ''}`}>
       {/* Left Navigation Sidebar */}
-      <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''}`}>
-        {/* Brand Logo */}
+      <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        {/* Brand Logo & Collapse Toggle */}
         <div className="sidebar-brand">
-          <div className="brand-icon-wrapper">
+          <div className="brand-icon-wrapper" onClick={() => switchTab('overview')} style={{ cursor: 'pointer' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               <path d="M12 8v4"></path>
               <path d="M12 16h.01"></path>
             </svg>
           </div>
-          <div className="brand-text">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="brand-title">FireGuard</span>
-              <span className="brand-pro-badge">PRO</span>
+          {!sidebarCollapsed && (
+            <div className="brand-text">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="brand-title">FireGuard</span>
+                <span className="brand-pro-badge">PRO</span>
+              </div>
+              <span className="brand-subtitle">IoT Safety • Digital Twin</span>
             </div>
-            <span className="brand-subtitle">IoT Safety • Digital Twin</span>
-          </div>
+          )}
+          <button
+            className="sidebar-collapse-toggle"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label="Toggle sidebar collapse"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              {sidebarCollapsed ? (
+                <polyline points="9 18 15 12 9 6"></polyline>
+              ) : (
+                <polyline points="15 18 9 12 15 6"></polyline>
+              )}
+            </svg>
+          </button>
         </div>
 
         {/* ESP32 Gateway Status Pill */}
-        <div className="sidebar-gateway-bar">
-          <span className="gateway-label">ESP32-S3 N16R8</span>
-          <span className="gateway-online-pill">
-            <span className="status-dot-sm connected"></span> 99.8% Online
-          </span>
-        </div>
+        {!sidebarCollapsed && (
+          <div className="sidebar-gateway-bar">
+            <span className="gateway-label">ESP32-S3 N16R8</span>
+            <span className="gateway-online-pill">
+              <span className={`status-dot-sm ${!isDataStale ? 'connected' : 'offline'}`}></span>
+              {!isDataStale ? '99.8% Online' : 'Standby / Offline'}
+            </span>
+          </div>
+        )}
 
         {/* Sidebar Menu Items */}
         <ul className="sidebar-menu">
@@ -1384,6 +1406,7 @@ export default function App() {
               className={`sidebar-btn ${currentTab === 'overview' ? 'active' : ''}`}
               onClick={() => switchTab('overview')}
               data-nav="overview"
+              title="Overview • Command Center"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="9" rx="1"></rect>
@@ -1391,7 +1414,26 @@ export default function App() {
                 <rect x="14" y="12" width="7" height="9" rx="1"></rect>
                 <rect x="3" y="16" width="7" height="5" rx="1"></rect>
               </svg>
-              <span className="sidebar-btn-label">Overview</span>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Overview</span>}
+            </button>
+          </li>
+
+          <li className="sidebar-item">
+            <button
+              className={`sidebar-btn ${currentTab === 'live' ? 'active' : ''}`}
+              onClick={() => switchTab('live')}
+              data-nav="live"
+              title="Digital Twin Facility • 3D Spatial Telemetry"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Digital Twin</span>}
+              {!sidebarCollapsed && (
+                <span className="sidebar-badge" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}>3D</span>
+              )}
             </button>
           </li>
 
@@ -1406,11 +1448,13 @@ export default function App() {
                 <path d="M23 7l-7 5 7 5V7z"></path>
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
               </svg>
-              <span className="sidebar-btn-label">Camera Surveillance</span>
-              <span className={`sidebar-badge ${cameraState === 'Live' ? 'badge-camera-live' : isFireActive ? 'badge-camera-alert' : 'badge-camera-stby'}`}>
-                {cameraState === 'Live' && <span className="sidebar-badge-pulse" />}
-                {cameraState === 'Live' ? 'LIVE' : isFireActive ? 'ALERT' : 'STBY'}
-              </span>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Camera Surveillance</span>}
+              {!sidebarCollapsed && (
+                <span className={`sidebar-badge ${cameraState === 'Live' ? 'badge-camera-live' : isFireActive ? 'badge-camera-alert' : 'badge-camera-stby'}`}>
+                  {cameraState === 'Live' && <span className="sidebar-badge-pulse" />}
+                  {cameraState === 'Live' ? 'LIVE' : isFireActive ? 'ALERT' : 'STBY'}
+                </span>
+              )}
             </button>
           </li>
 
@@ -1419,12 +1463,13 @@ export default function App() {
               className={`sidebar-btn ${currentTab === 'sensors' ? 'active' : ''}`}
               onClick={() => switchTab('sensors')}
               data-nav="sensors"
+              title="Sensor Analytics • Multi-Stream Plots"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 3v18h18"></path>
                 <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
               </svg>
-              <span className="sidebar-btn-label">Sensor Analytics</span>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Sensor Analytics</span>}
             </button>
           </li>
 
@@ -1433,13 +1478,14 @@ export default function App() {
               className={`sidebar-btn ${currentTab === 'history' ? 'active' : ''}`}
               onClick={() => switchTab('history')}
               data-nav="history"
+              title="Event History & Supabase Database Logs"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 8v4l3 3"></path>
                 <circle cx="12" cy="12" r="9"></circle>
               </svg>
-              <span className="sidebar-btn-label">Event History</span>
-              <span className="sidebar-badge badge-event-count">{incidents.length}</span>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Event History</span>}
+              {!sidebarCollapsed && <span className="sidebar-badge badge-event-count">{incidents.length}</span>}
             </button>
           </li>
 
@@ -1448,46 +1494,50 @@ export default function App() {
               className={`sidebar-btn ${currentTab === 'settings' ? 'active' : ''}`}
               onClick={() => switchTab('settings')}
               data-nav="settings"
+              title="System Settings & Hardware Diagnostics"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
-              <span className="sidebar-btn-label">Settings</span>
+              {!sidebarCollapsed && <span className="sidebar-btn-label">Settings</span>}
             </button>
           </li>
         </ul>
 
         {/* Project Credits Card */}
-        <div className="sidebar-credits-section">
-          <div className="sidebar-credits-card">
-            <div className="credits-badge-row">
-              <span className="credits-badge">MADE BY</span>
-            </div>
-            <div className="credits-team-grid">
-              <div className="credits-member" title="Lakshay Jain">
-                <span className="credits-initials">LJ</span>
-                <span className="credits-name">Lakshay Jain</span>
+        {!sidebarCollapsed && (
+          <div className="sidebar-credits-section">
+            <div className="sidebar-credits-card">
+              <div className="credits-badge-row">
+                <span className="credits-badge">MADE BY</span>
+                <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>v2.4 IoT</span>
               </div>
-              <div className="credits-member" title="Arnav Jain">
-                <span className="credits-initials">AJ</span>
-                <span className="credits-name">Arnav Jain</span>
-              </div>
-              <div className="credits-member" title="Hiten Shah">
-                <span className="credits-initials">HS</span>
-                <span className="credits-name">Hiten Shah</span>
-              </div>
-              <div className="credits-member" title="Bhavye Sani">
-                <span className="credits-initials">BS</span>
-                <span className="credits-name">Bhavye Sani</span>
+              <div className="credits-team-grid">
+                <div className="credits-member" title="Lakshay Jain">
+                  <span className="credits-initials">LJ</span>
+                  <span className="credits-name">Lakshay Jain</span>
+                </div>
+                <div className="credits-member" title="Arnav Jain">
+                  <span className="credits-initials">AJ</span>
+                  <span className="credits-name">Arnav Jain</span>
+                </div>
+                <div className="credits-member" title="Hiten Shah">
+                  <span className="credits-initials">HS</span>
+                  <span className="credits-name">Hiten Shah</span>
+                </div>
+                <div className="credits-member" title="Bhavye Sani">
+                  <span className="credits-initials">BS</span>
+                  <span className="credits-name">Bhavye Sani</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </aside>
 
       {/* Main Content Area */}
-      <div className="app-main">
+      <div className={`app-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         {/* Sticky Pulsing Emergency Banner */}
         <EmergencyBanner
           active={isFireActive}
@@ -1500,36 +1550,67 @@ export default function App() {
         {/* Top Header Bar */}
         <header className="top-header">
           <div className="header-left">
+            {/* Mobile Hamburger Toggle */}
+            <button
+              className="header-mobile-toggle"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle mobile menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+
             <div className="header-branding">
               <div className="header-icon-badge">
                 <span className="header-fire-icon">🔥</span>
               </div>
-              <h1 className="header-title">Fire Safety Control Center</h1>
-              <span className="header-live-status-pill">
-                <span className="live-status-dot"></span>
-                LIVE
-              </span>
+              <div>
+                <h1 className="header-title">FireGuard Pro</h1>
+                <div className="header-sub-path">Command Grid • Sector 04 / Core Engine</div>
+              </div>
+            </div>
+
+            {/* Systems Status Pill */}
+            <div className={`header-system-pill ${verifiedStatusMode}`}>
+              <span className={`status-dot-pulse ${verifiedStatusMode}`}></span>
+              <span>{verifiedStatusText}</span>
             </div>
           </div>
 
           <div className="header-right">
+            {/* Supabase Realtime Channel Pill */}
+            <div className="header-channel-pill" title="Supabase Postgres Realtime Changefeed">
+              <span className={`channel-dot ${supabaseConnected ? 'online' : 'offline'}`}></span>
+              <span className="channel-text">
+                {supabaseConnected ? 'Supabase Live' : 'Supabase Syncing'}
+              </span>
+            </div>
+
             {/* Real-time Time & Date Pill */}
             <div className="header-time-pill">
               <span className="header-time-icon">🕒</span>
-              <span className="header-time">{timeStr}</span>
+              <span className="header-time tabular-nums">{timeStr}</span>
               <span className="header-dot">•</span>
               <span className="header-date">{dateStr}</span>
             </div>
 
-            {/* Siren Armed Button */}
+            {/* Siren Armed Button with audio feedback waves */}
             <button
               onClick={() => audioService.unlockAudio()}
               className={`header-action-btn siren-btn ${audioState.isUnlocked ? 'armed' : 'unarmed'}`}
               title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to enable siren audio in browser'}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                {audioState.isUnlocked && (
+                  <>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </>
+                )}
               </svg>
               <span>{audioState.isUnlocked ? 'Siren Armed' : 'Enable Siren'}</span>
             </button>
@@ -1543,6 +1624,38 @@ export default function App() {
              VIEW 1: OVERVIEW (MAIN DASHBOARD)
              ================================================================= */}
           <section className={`page-section ${currentTab === 'overview' ? 'active' : ''}`}>
+
+            {/* Quick Tactical Telemetry Ribbon */}
+            <div className="overview-telemetry-ribbon" style={{ marginBottom: '18px' }}>
+              <div className="ribbon-item">
+                <span className="ribbon-label">MCU GATEWAY</span>
+                <span className="ribbon-value font-mono">ESP32-S3 (N16R8)</span>
+              </div>
+              <div className="ribbon-divider"></div>
+              <div className="ribbon-item">
+                <span className="ribbon-label">BUS TOPOLOGY</span>
+                <span className="ribbon-value font-mono">GPIO 4, 5, 6, 7 • 1.0Hz</span>
+              </div>
+              <div className="ribbon-divider"></div>
+              <div className="ribbon-item">
+                <span className="ribbon-label">SAFETY CRITERIA</span>
+                <span className="ribbon-value font-mono">Temp ≥ 20°C • Gas ≥ 800 • Flame</span>
+              </div>
+              <div className="ribbon-divider"></div>
+              <div className="ribbon-item">
+                <span className="ribbon-label">SPRINKLER RELAY</span>
+                <span className={`ribbon-value font-mono ${sprinklerActive ? 'active-relay' : ''}`}>
+                  {sprinklerActive ? 'DELUGE ACTIVE' : 'RELAY ARMED'}
+                </span>
+              </div>
+              <div className="ribbon-divider"></div>
+              <div className="ribbon-item">
+                <span className="ribbon-label">DATABASE SYNC</span>
+                <span className="ribbon-value font-mono" style={{ color: supabaseConnected ? '#16A34A' : '#F59E0B' }}>
+                  {supabaseConnected ? 'PostgreSQL Live' : 'Reconnecting...'}
+                </span>
+              </div>
+            </div>
 
             {/* =================================================================
                ROW 1: TOP 3 HERO SENSOR TELEMETRY CARDS (DHT22, MQ-2, FLAME)
@@ -1571,26 +1684,26 @@ export default function App() {
                 const ResizeBtn = () => (
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleCardSize(cardId); }}
-                    title={isWide ? 'Shrink card' : 'Expand card'}
+                    title={isWide ? 'Shrink card to standard 1 column' : 'Expand card to 2 columns'}
                     style={{
-                      background: 'none', border: '1px solid #E2E8F0', borderRadius: '3px',
-                      cursor: 'pointer', padding: '1px 5px', fontSize: '11px', color: '#64748B',
-                      lineHeight: 1, marginLeft: '6px', flexShrink: 0,
-                      transition: 'background 0.15s'
+                      background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '4px',
+                      cursor: 'pointer', padding: '3px 7px', fontSize: '11px', color: '#475569',
+                      lineHeight: 1, marginLeft: '6px', flexShrink: 0, fontWeight: 700,
+                      transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.color = '#2563EB'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = '#475569'; }}
                   >
-                    {isWide ? '⤡' : '⤢'}
+                    {isWide ? '⤡ Compact' : '⤢ Expand'}
                   </button>
                 );
 
                 // ── Drag handle hint icon ──
                 const DragHandle = () => (
                   <span
-                    title="Drag to reorder"
+                    title="Drag to rearrange dashboard layout"
                     style={{
-                      cursor: 'grab', fontSize: '14px', color: '#CBD5E1',
+                      cursor: 'grab', fontSize: '15px', color: '#94A3B8',
                       marginRight: '6px', userSelect: 'none', flexShrink: 0
                     }}
                   >⠿</span>
@@ -1612,7 +1725,7 @@ export default function App() {
                     </div>
                     <div className="hero-sensor-title">Ambient Temperature</div>
                     <div className="hero-reading-row">
-                      <span className={`hero-reading-value ${isDataStale || sensors.temp.val === null ? 'is-disconnected' : ''}`}>
+                      <span className={`hero-reading-value tabular-nums ${isDataStale || sensors.temp.val === null ? 'is-disconnected' : ''}`}>
                         {isDataStale || sensors.temp.val === null ? '--.- °C' : safeFormatTemp(sensors.temp.val)}
                       </span>
                       <span className={`hero-pill-hw ${!isDataStale && sensors.temp.connected ? 'hw-connected' : 'hw-offline'}`}>
@@ -1620,6 +1733,17 @@ export default function App() {
                         {!isDataStale && sensors.temp.connected ? 'Hardware Connected' : 'Hardware Offline'}
                       </span>
                     </div>
+
+                    {/* Peak / Minimum Tag Bar */}
+                    <div className="hero-metric-stats-row">
+                      <span className="metric-stat-chip">
+                        <span style={{ color: '#F97316' }}>▲ Peak</span> {sensors.temp.peak !== null && typeof sensors.temp.peak === 'number' ? `${sensors.temp.peak.toFixed(1)} °C` : '--'}
+                      </span>
+                      <span className="metric-stat-chip">
+                        <span style={{ color: '#2563EB' }}>▼ Low</span> {sensors.temp.min !== null && typeof sensors.temp.min === 'number' ? `${sensors.temp.min.toFixed(1)} °C` : '--'}
+                      </span>
+                    </div>
+
                     <div className="hero-status-row">
                       <div className="hero-status-left">
                         <span className={`status-dot-sm ${!isDataStale && sensors.temp.connected ? (sensors.temp.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
@@ -1659,7 +1783,7 @@ export default function App() {
                     </div>
                     <div className="hero-sensor-title">Gas / Smoke Concentration</div>
                     <div className="hero-reading-row">
-                      <span className={`hero-reading-value ${isDataStale || sensors.smoke.val === null ? 'is-disconnected' : ''}`}>
+                      <span className={`hero-reading-value tabular-nums ${isDataStale || sensors.smoke.val === null ? 'is-disconnected' : ''}`}>
                         {isDataStale || sensors.smoke.val === null ? '-- PPM' : safeFormatSmoke(sensors.smoke.val)}
                       </span>
                       <span className={`hero-pill-hw ${!isDataStale && sensors.smoke.connected ? 'hw-connected' : 'hw-offline'}`}>
@@ -1667,6 +1791,17 @@ export default function App() {
                         {!isDataStale && sensors.smoke.connected ? 'Hardware Connected' : 'Hardware Offline'}
                       </span>
                     </div>
+
+                    {/* Peak / Minimum Tag Bar */}
+                    <div className="hero-metric-stats-row">
+                      <span className="metric-stat-chip">
+                        <span style={{ color: '#8B5CF6' }}>▲ Peak</span> {sensors.smoke.peak !== null && typeof sensors.smoke.peak === 'number' ? `${sensors.smoke.peak.toFixed(0)} PPM` : '--'}
+                      </span>
+                      <span className="metric-stat-chip">
+                        <span style={{ color: '#2563EB' }}>▼ Low</span> {sensors.smoke.min !== null && typeof sensors.smoke.min === 'number' ? `${sensors.smoke.min.toFixed(0)} PPM` : '--'}
+                      </span>
+                    </div>
+
                     <div className="hero-status-row">
                       <div className="hero-status-left">
                         <span className={`status-dot-sm ${!isDataStale && sensors.smoke.connected ? (sensors.smoke.status === 'SAFE' ? 'connected' : 'disconnected') : 'offline'}`}></span>
@@ -1708,7 +1843,7 @@ export default function App() {
                     </div>
                     <div className="hero-sensor-title">Optical Flame Sensor</div>
                     <div className="hero-reading-row">
-                      <span className={`hero-reading-value ${isDataStale ? 'val-flame-offline' : (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe')}`}>
+                      <span className={`hero-reading-value tabular-nums ${isDataStale ? 'val-flame-offline' : (sensors.flame.detected ? 'val-flame-alert' : 'val-flame-safe')}`}>
                         {isDataStale ? 'OFFLINE ( -- )' : (sensors.flame.detected ? '🔥 CRITICAL (1)' : 'CLEAR / SAFE (0)')}
                       </span>
                       <span className={`hero-pill-hw ${isDataStale ? 'hw-offline' : (sensors.flame.detected ? 'hw-alert-pill' : 'hw-connected')}`}>
@@ -1716,6 +1851,14 @@ export default function App() {
                         {isDataStale ? 'Hardware Offline' : (sensors.flame.detected ? 'CRITICAL HAZARD' : 'Hardware Connected')}
                       </span>
                     </div>
+
+                    {/* Sensor Baseline Protocol status */}
+                    <div className="hero-metric-stats-row">
+                      <span className="metric-stat-chip">
+                        <span style={{ color: '#16A34A' }}>● IR State</span> {sensors.flame.detected ? 'ACTIVE HAZARD (LOW)' : 'QUENCHED / SAFE (HIGH)'}
+                      </span>
+                    </div>
+
                     <div className="hero-status-row">
                       <div className="hero-status-left">
                         <span className={`status-dot-sm ${isDataStale ? 'offline' : (sensors.flame.detected ? 'disconnected' : 'connected')}`}></span>
@@ -1760,12 +1903,24 @@ export default function App() {
                       <span className={`tactical-dot ${cameraState === 'Live' ? 'green' : isFireActive ? 'red' : 'green'}`}></span>
                       <div className="tactical-cam-text">
                         <span className="cam-code">CAM-01</span>
-                        <span className="cam-sub">ESP32-CAM [STANDBY]</span>
+                        <span className="cam-sub">ESP32-CAM [{cameraState.toUpperCase()}]</span>
                       </div>
                     </div>
-                    <div className="tactical-hud-stats">
+                    <div className="tactical-hud-stats" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="stat-badge">1.4 MBPS</span>
                       <span className="stat-badge">FOV: 120°</span>
+                      <button
+                        className="tactical-hud-fs-btn"
+                        onClick={(e) => { e.stopPropagation(); toggleFullscreen(cameraContainerRef); }}
+                        title="Toggle Fullscreen Viewport"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)',
+                          color: '#F8FAFC', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px',
+                          fontSize: '11px', lineHeight: 1
+                        }}
+                      >
+                        ⛶
+                      </button>
                     </div>
                   </div>
 
@@ -1794,6 +1949,23 @@ export default function App() {
                   {/* Bottom Tactical HUD */}
                   <div className="tactical-hud-footer">
                     <span className="tactical-fps">L-FPS: MJPEG</span>
+                    <button
+                      onClick={() => switchTab('camera')}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        borderRadius: '3px',
+                        color: '#38BDF8',
+                        fontSize: '9.5px',
+                        padding: '1.5px 6px',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        textTransform: 'uppercase'
+                      }}
+                      title="Switch to dedicated Camera Surveillance tab"
+                    >
+                      ↗ Full View
+                    </button>
                     <span className="tactical-res">1080p READY</span>
                     <span className="tactical-status-dot">●</span>
                   </div>
@@ -1836,16 +2008,48 @@ export default function App() {
                   <span>{emergencyOverride ? 'Cancel Emergency Override' : 'Manual Emergency Override'}</span>
                 </button>
 
-                <button className="btn-enterprise secondary" onClick={toggleSprinkler} style={{ padding: '10px 14px' }}>
-                  <span>Sprinkler Relay: {sprinklerActive ? 'ACTIVE' : 'OFF'}</span>
+                <button
+                  className={`btn-enterprise secondary ${sprinklerActive ? 'relay-active' : ''}`}
+                  onClick={toggleSprinkler}
+                  style={{
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>💧</span>
+                    <span>Sprinkler Relay</span>
+                  </span>
+                  <span className={`status-pill ${sprinklerActive ? 'pill-active' : 'pill-idle'}`} style={{
+                    fontSize: '10.5px',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: sprinklerActive ? '#EFF6FF' : '#F1F5F9',
+                    color: sprinklerActive ? '#2563EB' : '#64748B',
+                    border: '1px solid ' + (sprinklerActive ? '#BFDBFE' : '#E2E8F0'),
+                    fontWeight: 700
+                  }}>
+                    {sprinklerActive ? 'DELUGE ENGAGED' : 'ARMED / OFF'}
+                  </span>
                 </button>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn-enterprise secondary" style={{ flex: 1, padding: '9px 12px' }} onClick={toggleAutoMode}>
-                    Auto Mode: {autoMode ? 'ON' : 'OFF'}
+                  <button
+                    className="btn-enterprise secondary"
+                    style={{ flex: 1, padding: '9px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    onClick={toggleAutoMode}
+                  >
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: autoMode ? '#16A34A' : '#94A3B8' }}></span>
+                    <span>Auto: {autoMode ? 'ACTIVE' : 'MANUAL'}</span>
                   </button>
-                  <button className="btn-enterprise secondary" style={{ flex: 1, padding: '9px 12px' }} onClick={runDiagnosticTest}>
-                    {incidentStage > 0 ? '⏳ Drill Active...' : 'Drill Test'}
+                  <button
+                    className="btn-enterprise secondary"
+                    style={{ flex: 1, padding: '9px 12px' }}
+                    onClick={runDiagnosticTest}
+                  >
+                    {incidentStage > 0 ? `⏳ Stage ${incidentStage}/3...` : '⚡ Drill Test'}
                   </button>
                 </div>
 
@@ -2090,42 +2294,90 @@ export default function App() {
           </section>
 
           {/* =================================================================
-             VIEW 5: EVENT HISTORY & AUDIT LOGS
+             VIEW 5: EVENT HISTORY & AUDIT LOGS + SUPABASE DATA TABLE
              ================================================================= */}
           <section className={`page-section ${currentTab === 'history' ? 'active' : ''}`}>
-            <div className="history-cards-container">
-              {incidents.map((incident, index) => (
-                <div className="enterprise-card incident-card-enterprise" key={index}>
-                  <div className="incident-card-header">
-                    🔥 Fire Incident #{incidents.length - index}
-                  </div>
-                  <div className="incident-row">
-                    <span>Date:</span>
-                    <span>{incident.date}</span>
-                  </div>
-                  <div className="incident-row">
-                    <span>Fire Time:</span>
-                    <span>{incident.fireTime}</span>
-                  </div>
-                  <div className="incident-row">
-                    <span>Alert Time:</span>
-                    <span>{incident.alertTime}</span>
-                  </div>
-                  <div className="incident-row">
-                    <span>Sensors Triggered:</span>
-                    <span>
-                      {incident.sensors?.temp ? 'Temp ' : ''}
-                      {incident.sensors?.smoke ? 'Smoke ' : ''}
-                      {incident.sensors?.flame ? 'Flame ' : ''}
-                      {(!incident.sensors?.temp && !incident.sensors?.smoke && !incident.sensors?.flame) ? 'Alarm Protocol' : ''}
-                    </span>
-                  </div>
-                  <div className="alert-status-badge" style={{ marginTop: '8px' }}>
-                    ✔ {incident.status}
-                  </div>
-                </div>
-              ))}
+            {/* Top Interactive Mode Switcher */}
+            <div className="history-tab-header" style={{ marginBottom: '18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  className={`btn-enterprise ${historyTabMode === 'incidents' ? 'primary' : 'secondary'}`}
+                  onClick={() => setHistoryTabMode('incidents')}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '12.5px',
+                    background: historyTabMode === 'incidents' ? '#2563EB' : '#FFFFFF',
+                    color: historyTabMode === 'incidents' ? '#FFFFFF' : '#334155',
+                    border: '1px solid ' + (historyTabMode === 'incidents' ? '#2563EB' : '#CBD5E1'),
+                    borderRadius: '6px'
+                  }}
+                >
+                  📋 Incident Logs ({incidents.length})
+                </button>
+                <button
+                  className={`btn-enterprise ${historyTabMode === 'live_table' ? 'primary' : 'secondary'}`}
+                  onClick={() => setHistoryTabMode('live_table')}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '12.5px',
+                    background: historyTabMode === 'live_table' ? '#2563EB' : '#FFFFFF',
+                    color: historyTabMode === 'live_table' ? '#FFFFFF' : '#334155',
+                    border: '1px solid ' + (historyTabMode === 'live_table' ? '#2563EB' : '#CBD5E1'),
+                    borderRadius: '6px'
+                  }}
+                >
+                  ⚡ Supabase Live Database Stream
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11.5px', color: '#64748B' }}>
+                <span className="tabular-nums font-mono">
+                  {incidents.length} Logged Incident{incidents.length === 1 ? '' : 's'}
+                </span>
+                <span>•</span>
+                <span style={{ color: '#16A34A', fontWeight: 600 }}>Realtime Sync Active</span>
+              </div>
             </div>
+
+            {historyTabMode === 'incidents' ? (
+              <div className="history-cards-container">
+                {incidents.map((incident, index) => (
+                  <div className="enterprise-card incident-card-enterprise" key={index}>
+                    <div className="incident-card-header">
+                      🔥 Fire Incident #{incidents.length - index}
+                    </div>
+                    <div className="incident-row">
+                      <span>Date:</span>
+                      <span>{incident.date}</span>
+                    </div>
+                    <div className="incident-row">
+                      <span>Fire Time:</span>
+                      <span>{incident.fireTime}</span>
+                    </div>
+                    <div className="incident-row">
+                      <span>Alert Time:</span>
+                      <span>{incident.alertTime}</span>
+                    </div>
+                    <div className="incident-row">
+                      <span>Sensors Triggered:</span>
+                      <span>
+                        {incident.sensors?.temp ? 'Temp ' : ''}
+                        {incident.sensors?.smoke ? 'Smoke ' : ''}
+                        {incident.sensors?.flame ? 'Flame ' : ''}
+                        {(!incident.sensors?.temp && !incident.sensors?.smoke && !incident.sensors?.flame) ? 'Alarm Protocol' : ''}
+                      </span>
+                    </div>
+                    <div className="alert-status-badge" style={{ marginTop: '8px' }}>
+                      ✔ {incident.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ width: '100%' }}>
+                <BackendDataTable isEmergency={isFireActive} />
+              </div>
+            )}
           </section>
 
           {/* =================================================================
