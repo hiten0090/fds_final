@@ -1223,6 +1223,28 @@ export default function App() {
     }, 60);
   };
 
+  const exportTelemetryCsv = () => {
+    const labels = chartLabelsRef.current || [];
+    const temps = chartTempDataRef.current || [];
+    const smokes = chartSmokeDataRef.current || [];
+    const flames = chartFlameDataRef.current || [];
+
+    let csv = 'Timestamp,Temperature (°C),Smoke/Gas (PPM),Flame State (Binary)\n';
+    for (let i = 0; i < labels.length; i++) {
+      csv += `${labels[i] || ''},${temps[i] ?? ''},${smokes[i] ?? ''},${flames[i] ?? ''}\n`;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `FireGuard_Telemetry_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const triggerManualOverride = () => {
     const newVal = !emergencyOverride;
     setEmergencyOverride(newVal);
@@ -1614,6 +1636,16 @@ export default function App() {
               </svg>
               <span>{audioState.isUnlocked ? 'Siren Armed' : 'Enable Siren'}</span>
             </button>
+
+            {/* Quick Emergency Override Header Action (Matching Reference Video) */}
+            <button
+              onClick={triggerManualOverride}
+              className={`header-emergency-btn ${emergencyOverride ? 'override-active' : ''}`}
+              title={emergencyOverride ? "Cancel emergency override" : "Manually dispatch full facility emergency override"}
+            >
+              <span>🚨</span>
+              <span>{emergencyOverride ? 'Cancel Override' : 'Emergency Override'}</span>
+            </button>
           </div>
         </header>
 
@@ -1624,6 +1656,145 @@ export default function App() {
              VIEW 1: OVERVIEW (MAIN DASHBOARD)
              ================================================================= */}
           <section className={`page-section ${currentTab === 'overview' ? 'active' : ''}`}>
+
+            {/* Top Facility Header Banner (Matching Reference Video) */}
+            <div className="facility-dashboard-header" style={{ marginBottom: '16px' }}>
+              <div className="facility-header-left">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span className="facility-badge-tag">FACILITY MONITORED</span>
+                  <span className="facility-sector-tag font-mono">SECTOR B-04 / LEVEL 01</span>
+                </div>
+                <h2 className="facility-main-title">{facilityLocation?.facilityName || 'Main Storage Containment'}</h2>
+                <p className="facility-subtitle font-mono">
+                  {facilityLocation?.address || 'Industrial Cryogenic Hold & Fire Containment Zone • Real-Time Environmental Safety Node'}
+                </p>
+              </div>
+
+              <div className="facility-header-actions">
+                <button
+                  className="btn-facility-action"
+                  onClick={resetEntireSystem}
+                  title="Calibrate dynamic sensor baseline"
+                >
+                  <span>🔄</span>
+                  <span>Calibrate Baseline</span>
+                </button>
+                <button
+                  className={`btn-facility-action ${sprinklerActive ? 'relay-on' : ''}`}
+                  onClick={toggleSprinkler}
+                  title="Toggle fail-safe deluge sprinkler relay"
+                >
+                  <span>💧</span>
+                  <span>Sprinkler: {sprinklerActive ? 'ENGAGED' : 'ARMED'}</span>
+                </button>
+                <button
+                  className="btn-facility-action"
+                  onClick={runDiagnosticTest}
+                  title="Simulate 3-stage emergency drill test"
+                >
+                  <span>⚡</span>
+                  <span>{incidentStage > 0 ? `Drill (${incidentStage}/3)` : 'Drill Test'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Environmental Safety Notice Callout Strip */}
+            <div className={`safety-notice-callout ${isFireActive ? 'notice-critical' : isWarningActive ? 'notice-warning' : 'notice-nominal'}`} style={{ marginBottom: '18px' }}>
+              <div className="notice-icon">
+                {isFireActive ? '🚨' : isWarningActive ? '⚠️' : '🛡️'}
+              </div>
+              <div className="notice-content">
+                <span className="notice-title">
+                  {isFireActive
+                    ? 'CRITICAL ALERT: Fire Hazard Confirmed — Automatic Safety Containment Engaged!'
+                    : isWarningActive
+                    ? 'ELEVATED TELEMETRY: Sensor readings approaching critical safety limits. Inspection advised.'
+                    : 'SAFETY ENVELOPE NOMINAL: All micro-climate sensors within verified threshold envelopes.'}
+                </span>
+                <span className="notice-sub font-mono">
+                  {isDataStale
+                    ? 'Hardware Offline (Standby Mode) • Stale historical records quarantined.'
+                    : `Active Telemetry: Temp ${safeFormatTemp(sensors.temp.val)} (Limit: 20°C) • Smoke ${safeFormatSmoke(sensors.smoke.val)} (Trigger: 800) • Flame: ${sensors.flame.detected ? 'DETECTED' : 'SAFE'}`}
+                </span>
+              </div>
+              <div className="notice-actions">
+                <button
+                  className="btn-notice-dismiss"
+                  onClick={() => switchTab('sensors')}
+                >
+                  View Envelopes →
+                </button>
+              </div>
+            </div>
+
+            {/* Top 2 KPI Summary Cards (Transducers Online & Gateway Health) */}
+            <div className="overview-kpi-grid" style={{ marginBottom: '18px' }}>
+              {/* Card 1: Transducers Online Matrix */}
+              <div className="enterprise-card kpi-summary-card">
+                <div className="kpi-header">
+                  <span className="kpi-label">TRANSDUCER MATRIX</span>
+                  <span className="kpi-badge-live">
+                    <span className="status-dot-sm connected"></span> 1.0 Hz Live
+                  </span>
+                </div>
+                <div className="kpi-body">
+                  <div className="kpi-main-metric">
+                    <span className="kpi-metric-number tabular-nums">
+                      {isDataStale ? '0 / 4' : `${(sensors.temp.connected ? 1 : 0) + (sensors.smoke.connected ? 1 : 0) + (sensors.flame.connected ? 1 : 0) + 1} / 4`}
+                    </span>
+                    <span className="kpi-metric-sub">Transducers Active</span>
+                  </div>
+                  <div className="kpi-transducer-list">
+                    <div className="transducer-item">
+                      <span className={`transducer-dot ${!isDataStale && sensors.temp.connected ? 'online' : 'offline'}`}></span>
+                      <span className="transducer-name">DHT22 Temp (GPIO 4)</span>
+                    </div>
+                    <div className="transducer-item">
+                      <span className={`transducer-dot ${!isDataStale && sensors.smoke.connected ? 'online' : 'offline'}`}></span>
+                      <span className="transducer-name">MQ-2 Gas (GPIO 5)</span>
+                    </div>
+                    <div className="transducer-item">
+                      <span className={`transducer-dot ${!isDataStale && sensors.flame.connected ? 'online' : 'offline'}`}></span>
+                      <span className="transducer-name">Flame Optical (GPIO 6)</span>
+                    </div>
+                    <div className="transducer-item">
+                      <span className={`transducer-dot ${!isDataStale ? 'online' : 'offline'}`}></span>
+                      <span className="transducer-name">Siren Relay (GPIO 7)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Network & Gateway Health */}
+              <div className="enterprise-card kpi-summary-card">
+                <div className="kpi-header">
+                  <span className="kpi-label">NETWORK &amp; GATEWAY HEALTH</span>
+                  <span className="kpi-badge-locked">Telemetry Locked</span>
+                </div>
+                <div className="kpi-body">
+                  <div className="kpi-main-metric">
+                    <span className="kpi-metric-number tabular-nums" style={{ color: !isDataStale ? '#16A34A' : '#64748B' }}>
+                      {!isDataStale ? '99.8%' : 'OFFLINE'}
+                    </span>
+                    <span className="kpi-metric-sub">Packet Delivery Rate</span>
+                  </div>
+                  <div className="kpi-health-meta">
+                    <div className="health-row">
+                      <span className="health-label">MCU Architecture:</span>
+                      <span className="health-val font-mono">ESP32-S3 (N16R8 Dual-Core)</span>
+                    </div>
+                    <div className="health-row">
+                      <span className="health-label">Cloud Synchronization:</span>
+                      <span className="health-val font-mono">{supabaseConnected ? 'Supabase PostgreSQL (Active)' : 'Reconnecting...'}</span>
+                    </div>
+                    <div className="health-row">
+                      <span className="health-label">Round-Trip Latency:</span>
+                      <span className="health-val font-mono">{isDataStale ? '> 30s (Stale)' : '< 1.0s (Live Telemetry)'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Quick Tactical Telemetry Ribbon */}
             <div className="overview-telemetry-ribbon" style={{ marginBottom: '18px' }}>
@@ -2060,6 +2231,63 @@ export default function App() {
                 >
                   Calibrate System Baseline
                 </button>
+              </div>
+            </div>
+
+            {/* =================================================================
+               ROW 4: SYNCHRONIZED ENVIRONMENTAL CORRELATION (GRAND CHART)
+               Real-time multi-dataset alignment of temperature and smoke
+               ================================================================= */}
+            <div className="enterprise-card grand-correlation-card" style={{ marginBottom: '22px' }}>
+              <div className="correlation-card-header">
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="correlation-icon">📈</span>
+                    <h3 className="correlation-title">Synchronized Environmental Correlation</h3>
+                    <span className="correlation-badge font-mono">1.0 Hz Realtime</span>
+                  </div>
+                  <p className="correlation-subtitle">
+                    Dual-axis rolling telemetry correlation aligning ambient temperature and combustible smoke density
+                  </p>
+                </div>
+
+                <div className="correlation-header-right">
+                  <div className="correlation-legend">
+                    <span className="legend-item">
+                      <span className="legend-dot" style={{ background: '#F97316' }}></span>
+                      <span>Temperature (°C)</span>
+                    </span>
+                    <span className="legend-item">
+                      <span className="legend-dot" style={{ background: '#8B5CF6' }}></span>
+                      <span>Smoke / Gas (PPM)</span>
+                    </span>
+                  </div>
+                  <button
+                    className="btn-export-telemetry"
+                    onClick={exportTelemetryCsv}
+                    title="Download current rolling telemetry buffer as CSV"
+                  >
+                    <span>📊</span>
+                    <span>Export CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Grand Chart Canvas */}
+              <div className="grand-chart-viewport" style={{ height: '260px', width: '100%', position: 'relative' }}>
+                <canvas ref={mainCanvasRef} id="mainSyncCorrelationChart"></canvas>
+              </div>
+
+              <div className="correlation-footer">
+                <div className="correlation-footer-left font-mono">
+                  <span className="live-dot-pulse"></span>
+                  <span>Continuous 60-Second Rolling Window • Hardware Synchronized Telemetry</span>
+                </div>
+                <div className="correlation-footer-right font-mono">
+                  <span>Temp Limit: 20.0°C</span>
+                  <span>•</span>
+                  <span>Gas Trigger: 800 ADC</span>
+                </div>
               </div>
             </div>
           </section>

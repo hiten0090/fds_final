@@ -4319,3 +4319,458 @@ body {
     display: none;
   }
 }
+
+/* ==========================================================================
+   25. REFERENCE VIDEO INDUSTRIAL UI STYLING
+   Facility Header, Safety Notice Callout, KPI Matrix, Grand Correlation Chart
+   ========================================================================== */
+
+/* ── Top Facility Header ──────────────────────────────────────────────────── */
+.facility-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.facility-badge-tag {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #2563EB;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+  font-family: var(--font-tactical);
+}
+
+.facility-sector-tag {
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.facility-main-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 2px 0 3px 0;
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.facility-subtitle {
+  font-size: 11.5px;
+  color: #64748B;
+}
+
+.facility-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-facility-action {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.btn-facility-action:hover {
+  background: #F8FAFD;
+  border-color: #CBD5E1;
+  color: #0F172A;
+}
+
+.btn-facility-action.relay-on {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #2563EB;
+  font-weight: 700;
+}
+
+/* ── Safety Notice Callout Strip ──────────────────────────────────────────── */
+.safety-notice-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  flex-wrap: wrap;
+}
+
+.safety-notice-callout.notice-nominal {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+  color: #166534;
+}
+
+.safety-notice-callout.notice-warning {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
+.safety-notice-callout.notice-critical {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B;
+  animation: pulseAlert 1.5s infinite;
+}
+
+.notice-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.notice-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.notice-title {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.notice-sub {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.btn-notice-dismiss {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  color: inherit;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-notice-dismiss:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* ── Top 2 Wide KPI Cards ─────────────────────────────────────────────────── */
+.overview-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .overview-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-summary-card {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 130px;
+}
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.kpi-label {
+  font-family: var(--font-tactical);
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kpi-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.kpi-badge-locked {
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.kpi-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.kpi-main-metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-metric-number {
+  font-size: 34px;
+  font-weight: 800;
+  color: #0F172A;
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.kpi-metric-sub {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.kpi-transducer-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 12px;
+}
+
+.transducer-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #334155;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+.transducer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.transducer-dot.online {
+  background: #10B981;
+}
+
+.transducer-dot.offline {
+  background: #94A3B8;
+}
+
+.kpi-health-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.health-label {
+  color: #64748B;
+  font-size: 10.5px;
+}
+
+.health-val {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+/* ── Quick Header Emergency Override Button ───────────────────────────────── */
+.header-emergency-btn {
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 13px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.header-emergency-btn:hover {
+  background: #FEE2E2;
+  border-color: #F87171;
+}
+
+.header-emergency-btn.override-active {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #B91C1C;
+  animation: pulseAlert 1.2s infinite;
+}
+
+/* ── Synchronized Environmental Correlation Grand Chart ───────────────────── */
+.grand-correlation-card {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.correlation-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.correlation-icon {
+  font-size: 18px;
+}
+
+.correlation-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  font-family: var(--font-heading);
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.correlation-subtitle {
+  font-size: 11.5px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.correlation-badge {
+  font-size: 10px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #2563EB;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.correlation-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.correlation-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  font-family: var(--font-mono);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.btn-export-telemetry {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-heading);
+}
+
+.btn-export-telemetry:hover {
+  background: #F8FAFD;
+  border-color: #2563EB;
+  color: #2563EB;
+}
+
+.grand-chart-viewport {
+  border: 1px solid #F1F5F9;
+  border-radius: 6px;
+  background: #FAFBFD;
+  padding: 8px 12px;
+}
+
+.correlation-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #64748B;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.live-dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  display: inline-block;
+  animation: live-pulse 1.8s infinite;
+  margin-right: 6px;
+}
