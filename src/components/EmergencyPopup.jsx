@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { locationService } from '../services/locationService';
 import { smsService } from '../services/smsService';
+import { webcamService } from '../services/webcamService';
 import {
   getRegisteredRecipients,
   buildWhatsAppMessage,
@@ -19,8 +20,10 @@ export default function EmergencyPopup({
 }) {
   const okBtnRef = useRef(null);
   const viewDashBtnRef = useRef(null);
+  const videoRef = useRef(null);
   const [smsStatus, setSmsStatus] = useState(smsService.currentStatus);
   const [autoOpenWa, setAutoOpenWa] = useState(isAutoOpenEnabled());
+  const [webcamState, setWebcamState] = useState(webcamService.getState());
   const loc = facilityLocation || locationService.getLocation();
   const isConfigured = locationService.isConfigured(loc);
   const mapsUrl = locationService.getGoogleMapsUrl(loc);
@@ -32,6 +35,33 @@ export default function EmergencyPopup({
     severity: severity || 'CRITICAL',
     eventTime
   });
+
+  // Subscribe to webcam service updates
+  useEffect(() => {
+    const unsubWebcam = webcamService.subscribe((state) => {
+      setWebcamState(state);
+    });
+    return unsubWebcam;
+  }, []);
+
+  // Auto-start laptop webcam immediately when emergency popup mounts
+  useEffect(() => {
+    if (!webcamService.isActive) {
+      webcamService.startWebcam().catch((err) => {
+        console.warn('[EmergencyPopup] Auto webcam start error:', err);
+      });
+    }
+  }, []);
+
+  // Bind live mediaStream to HTML5 video element
+  useEffect(() => {
+    if (videoRef.current && webcamState.stream) {
+      videoRef.current.srcObject = webcamState.stream;
+      videoRef.current.play().catch((err) => {
+        console.warn('[EmergencyPopup] Video playback error:', err);
+      });
+    }
+  }, [webcamState.stream]);
 
   useEffect(() => {
     const unsub = smsService.onStatusChange((status) => {
@@ -97,6 +127,97 @@ export default function EmergencyPopup({
           <span className={`severity-value ${(severity || 'critical').toLowerCase()}`} id="popup-severity">
             {(severity || 'CRITICAL').toUpperCase()}
           </span>
+        </div>
+
+        {/* Tactical Laptop WebCam Surveillance Stream */}
+        <div className="popup-webcam-card">
+          <div className="popup-webcam-hud-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className={`hud-dot ${webcamState.isActive ? 'active-pulse' : 'offline'}`}></span>
+              <span className="popup-webcam-title font-mono">
+                {webcamState.isActive ? 'LAPTOP WEBCAM • LIVE LOCAL SURVEILLANCE' : 'LAPTOP WEBCAM STANDBY'}
+              </span>
+            </div>
+            <span className="popup-webcam-badge font-mono">
+              {webcamState.isActive ? 'FEED ACTIVE • 720p' : 'OFFLINE'}
+            </span>
+          </div>
+
+          <div className="popup-webcam-viewport">
+            {webcamState.isActive && webcamState.stream ? (
+              <div className="popup-video-wrapper">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="popup-live-video"
+                />
+                <div className="popup-video-overlay font-mono">
+                  <span>● LIVE BROADCAST</span>
+                  <span>{eventTime || new Date().toLocaleTimeString()}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="popup-webcam-placeholder">
+                {webcamState.error ? (
+                  <div className="webcam-error-box font-mono">
+                    <span>⚠️ {webcamState.error}</span>
+                    <button
+                      type="button"
+                      onClick={() => webcamService.startWebcam()}
+                      className="btn-webcam-retry"
+                    >
+                      Retry Camera Permission
+                    </button>
+                  </div>
+                ) : (
+                  <div className="webcam-activating-box">
+                    <span className="webcam-icon-spin">📹</span>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B', marginTop: '6px' }}>
+                      Activating Laptop WebCam...
+                    </div>
+                    <p style={{ fontSize: '11px', color: '#64748B', margin: '4px 0 8px 0' }}>
+                      Visual surveillance automatically engaged upon fire confirmation.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => webcamService.startWebcam()}
+                      className="btn-webcam-retry"
+                    >
+                      ▶ Allow / Start Camera
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Action Row for Webcam */}
+          {webcamState.isActive && (
+            <div className="popup-webcam-actions-bar">
+              <button
+                type="button"
+                onClick={() => {
+                  const snap = webcamService.captureSnapshot(videoRef.current);
+                  if (snap) {
+                    const link = document.createElement('a');
+                    link.href = snap;
+                    link.download = `FireGuard_Emergency_Webcam_${Date.now()}.jpg`;
+                    link.click();
+                  }
+                }}
+                className="btn-webcam-snap"
+                title="Save high-resolution visual evidence of the incident"
+              >
+                <span>📸</span>
+                <span>Save Incident Photo</span>
+              </button>
+              <span className="font-mono" style={{ fontSize: '10.5px', color: '#15803D' }}>
+                ✓ Streaming live from laptop hardware
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Facility Location Dispatch Box */}

@@ -179,12 +179,16 @@ Frontend Views & Navigation:
 1. Overview Tab (`overview`):
    - 3 Top Hero Sensor Cards (Ambient Temperature, Gas/Smoke, Optical Flame)
    - Real-time sparkline telemetry wave charts (Chart.js)
-   - ESP32-CAM Tactical Surveillance Viewport
+   - ESP32-CAM & Laptop WebCam Tactical Surveillance Viewport (Auto-Activates on Fire Alerts)
    - Facility Geolocation Radar & First Responder Routing
    - Emergency SMS Dispatch Panel
    - Manual Emergency Override Button
-2. Camera Surveillance Tab (`live`):
-   - Fullscreen camera stream viewport with retry backoff and FOV overlays.
+2. Camera Surveillance Tab (`camera`):
+   - Dual-Source Surveillance: ESP32-CAM Relay (Remote) + Laptop WebCam (Local built-in camera).
+   - Automatic Laptop WebCam Activation: Whenever `isFireActive` is triggered (real fire or drill),
+     `navigator.mediaDevices.getUserMedia` automatically turns on the laptop webcam to stream live
+     room surveillance both on the dashboard and inside the fullscreen `EmergencyPopup` dialog.
+   - Evidence Snapshot Capture: 1-click high-res photo capture with timestamp watermark.
 3. Sensor Analytics Tab (`sensors`):
    - Detailed expanded historical charts for Temperature, Smoke, and Flame with 
      time axis, grid lines, and interactive hover tooltips.

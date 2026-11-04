@@ -13,6 +13,7 @@ import SmsAlertCard from './components/SmsAlertCard';
 import BackendDataTable from './components/BackendDataTable';
 import { locationService } from './services/locationService';
 import { smsService } from './services/smsService';
+import { webcamService } from './services/webcamService';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 const DEFAULT_RELAY_STREAM_URL = `${BACKEND_BASE_URL}/camera/stream`;
@@ -86,6 +87,12 @@ export default function App() {
   const cameraContainerRef = useRef(null);
   const dedicatedCameraRef = useRef(null);
   const [lastUpdateTime, setLastUpdateTime] = useState('');
+
+  // Laptop WebCam & Multi-Source Camera State
+  const [cameraSource, setCameraSource] = useState('auto'); // 'auto' | 'webcam' | 'esp32'
+  const [webcamState, setWebcamState] = useState(webcamService.getState());
+  const webcamVideoRef = useRef(null);
+  const dedicatedWebcamVideoRef = useRef(null);
 
   // Live telemetry values (actual sensor values, null if absent)
   const [sensors, setSensors] = useState({
@@ -380,11 +387,26 @@ export default function App() {
     };
   }, []);
 
-  // Camera activation lifecycle on confirmed fire detection
+  // Subscribe to webcam service updates
+  useEffect(() => {
+    const unsub = webcamService.subscribe((st) => {
+      setWebcamState(st);
+      if (st.isActive) {
+        setCameraState('Live');
+      }
+    });
+    return unsub;
+  }, []);
+
+  // Camera & Laptop WebCam activation lifecycle on confirmed fire detection
   useEffect(() => {
     if (isFireActive) {
       setCameraState((prev) => (prev === 'Offline' ? 'Connecting' : prev));
       setStreamRetryCount(0);
+      // Automatically turn ON laptop webcam when fire alert triggers!
+      webcamService.startWebcam().catch((err) => {
+        console.warn("[App] Auto laptop webcam start error on fire alert:", err);
+      });
     } else {
       setCameraState('Offline');
       setStreamRetryCount(0);
@@ -392,8 +414,24 @@ export default function App() {
         clearTimeout(streamRetryTimerRef.current);
         streamRetryTimerRef.current = null;
       }
+      // Stop laptop webcam when fire alert ends unless user manually chose webcam source
+      if (cameraSource !== 'webcam') {
+        webcamService.stopWebcam();
+      }
     }
-  }, [isFireActive]);
+  }, [isFireActive, cameraSource]);
+
+  // Bind live mediaStream to HTML5 video elements whenever stream or view changes
+  useEffect(() => {
+    if (webcamVideoRef.current && webcamState.stream) {
+      webcamVideoRef.current.srcObject = webcamState.stream;
+      webcamVideoRef.current.play().catch((e) => console.warn("[Webcam] Overview video play error:", e));
+    }
+    if (dedicatedWebcamVideoRef.current && webcamState.stream) {
+      dedicatedWebcamVideoRef.current.srcObject = webcamState.stream;
+      dedicatedWebcamVideoRef.current.play().catch((e) => console.warn("[Webcam] Dedicated video play error:", e));
+    }
+  }, [webcamState.stream, currentTab, cameraSource, isFireActive]);
 
   // Safe camera stream error handler with backoff
   const handleCameraStreamError = () => {
@@ -2109,15 +2147,48 @@ export default function App() {
                   {/* Top Tactical HUD */}
                   <div className="tactical-hud-header">
                     <div className="tactical-hud-cam-id">
-                      <span className={`tactical-dot ${cameraState === 'Live' ? 'green' : isFireActive ? 'red' : 'green'}`}></span>
+                      <span className={`tactical-dot ${webcamState.isActive ? 'red live-pulse' : cameraState === 'Live' ? 'green' : isFireActive ? 'red' : 'green'}`}></span>
                       <div className="tactical-cam-text">
-                        <span className="cam-code">CAM-01</span>
-                        <span className="cam-sub">ESP32-CAM [{cameraState.toUpperCase()}]</span>
+                        <span className="cam-code">{webcamState.isActive ? 'CAM-LOCAL' : 'CAM-01'}</span>
+                        <span className="cam-sub">
+                          {webcamState.isActive ? 'LAPTOP WEBCAM [LIVE SURVEILLANCE]' : `ESP32-CAM [${cameraState.toUpperCase()}]`}
+                        </span>
                       </div>
                     </div>
+
                     <div className="tactical-hud-stats" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="stat-badge">1.4 MBPS</span>
-                      <span className="stat-badge">FOV: 120°</span>
+                      {/* Camera Source Selector */}
+                      <div className="tactical-source-toggle font-mono">
+                        <button
+                          type="button"
+                          className={`btn-source-tab ${cameraSource === 'auto' ? 'active' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); setCameraSource('auto'); }}
+                          title="Auto-trigger Laptop WebCam on fire alert"
+                        >
+                          AUTO
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn-source-tab ${cameraSource === 'webcam' ? 'active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCameraSource('webcam');
+                            webcamService.startWebcam().catch((err) => console.warn(err));
+                          }}
+                          title="Use Laptop WebCam"
+                        >
+                          WEBCAM
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn-source-tab ${cameraSource === 'esp32' ? 'active' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); setCameraSource('esp32'); }}
+                          title="Use ESP32-CAM Stream"
+                        >
+                          ESP32
+                        </button>
+                      </div>
+
                       <button
                         className="tactical-hud-fs-btn"
                         onClick={(e) => { e.stopPropagation(); toggleFullscreen(cameraContainerRef); }}
@@ -2133,8 +2204,22 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Center HUD / Feed */}
-                  {isFireActive || cameraState === 'Live' ? (
+                  {/* Center HUD / Feed: Laptop WebCam or ESP32-CAM Stream */}
+                  {webcamState.isActive && (cameraSource === 'webcam' || cameraSource === 'auto' || isFireActive) ? (
+                    <div className="tactical-live-feed-wrap">
+                      <video
+                        ref={webcamVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="camera-video-feed"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div className="tactical-feed-badge alert-badge font-mono">
+                        <span>● LIVE LAPTOP SURVEILLANCE FEED</span>
+                      </div>
+                    </div>
+                  ) : isFireActive || cameraState === 'Live' ? (
                     <div className="tactical-live-feed-wrap">
                       <img
                         src={liveStreamUrl}
@@ -2143,21 +2228,50 @@ export default function App() {
                         onLoad={handleCameraStreamSuccess}
                         onError={handleCameraStreamError}
                       />
-                      <div className="tactical-feed-badge">LIVE RELAY • ACTIVE</div>
+                      <div className="tactical-feed-badge font-mono">LIVE RELAY • ACTIVE</div>
                     </div>
                   ) : (
                     <div className="tactical-reticle-box">
                       <div className="tactical-title">Conditions Are Normal</div>
-                      <div className="tactical-subtitle">OV2640 Sensor • Auto Flashlight Prime Ready</div>
-                      <button className="tactical-connect-btn" onClick={manualRetryStream}>
-                        ▶ Connect Live Stream
-                      </button>
+                      <div className="tactical-subtitle">OV2640 &amp; Laptop WebCam • Auto-Arms on Fire Detection</div>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <button
+                          className="tactical-connect-btn"
+                          onClick={() => {
+                            setCameraSource('webcam');
+                            webcamService.startWebcam().catch((err) => console.warn(err));
+                          }}
+                        >
+                          📹 Test Laptop WebCam
+                        </button>
+                        <button className="tactical-connect-btn" onClick={manualRetryStream}>
+                          ▶ Connect ESP32 Stream
+                        </button>
+                      </div>
                     </div>
                   )}
 
                   {/* Bottom Tactical HUD */}
-                  <div className="tactical-hud-footer">
-                    <span className="tactical-fps">L-FPS: MJPEG</span>
+                  <div className="tactical-hud-footer font-mono">
+                    <span className="tactical-fps">{webcamState.isActive ? '30 FPS • WEBCAM' : 'L-FPS: MJPEG'}</span>
+                    {webcamState.isActive && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const snap = webcamService.captureSnapshot(webcamVideoRef.current);
+                          if (snap) {
+                            const a = document.createElement('a');
+                            a.href = snap;
+                            a.download = `FireGuard_Laptop_Snapshot_${Date.now()}.jpg`;
+                            a.click();
+                          }
+                        }}
+                        className="tactical-snap-btn"
+                        title="Capture and download snapshot"
+                      >
+                        📸 Snap
+                      </button>
+                    )}
                     <button
                       onClick={() => switchTab('camera')}
                       style={{
@@ -2175,7 +2289,7 @@ export default function App() {
                     >
                       ↗ Full View
                     </button>
-                    <span className="tactical-res">1080p READY</span>
+                    <span className="tactical-res">720p HD</span>
                     <span className="tactical-status-dot">●</span>
                   </div>
                 </div>
@@ -2411,20 +2525,52 @@ export default function App() {
               className="enterprise-card dedicated-camera-card"
               style={{ padding: '24px', background: '#0B1329', border: '1px solid #1E293B' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{
                     width: '12px',
                     height: '12px',
                     borderRadius: '50%',
-                    background: cameraState === 'Live' ? '#16A34A' : '#DC2626',
-                    boxShadow: cameraState === 'Live' ? '0 0 10px #16A34A' : '0 0 10px #DC2626'
+                    background: (webcamState.isActive || cameraState === 'Live') ? '#16A34A' : '#DC2626',
+                    boxShadow: (webcamState.isActive || cameraState === 'Live') ? '0 0 10px #16A34A' : '0 0 10px #DC2626'
                   }}></div>
                   <span style={{ fontSize: '18px', fontWeight: 800, color: '#F8FAFC' }}>
-                    ESP32-CAM Surveillance Feed Relay
+                    {webcamState.isActive ? 'Laptop WebCam Local Surveillance Feed' : 'ESP32-CAM Surveillance Feed Relay'}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {/* WebCam / ESP32 source switcher */}
+                  <button
+                    className="btn-enterprise secondary"
+                    onClick={() => {
+                      if (webcamState.isActive) {
+                        webcamService.stopWebcam();
+                        setCameraSource('esp32');
+                      } else {
+                        setCameraSource('webcam');
+                        webcamService.startWebcam().catch(err => console.warn(err));
+                      }
+                    }}
+                    style={{ background: webcamState.isActive ? '#1E293B' : undefined, color: webcamState.isActive ? '#38BDF8' : undefined }}
+                  >
+                    📹 {webcamState.isActive ? 'Stop Laptop WebCam' : 'Start Laptop WebCam'}
+                  </button>
+                  {webcamState.isActive && (
+                    <button
+                      className="btn-enterprise secondary"
+                      onClick={() => {
+                        const snap = webcamService.captureSnapshot(dedicatedWebcamVideoRef.current);
+                        if (snap) {
+                          const a = document.createElement('a');
+                          a.href = snap;
+                          a.download = `FireGuard_Evidence_${Date.now()}.jpg`;
+                          a.click();
+                        }
+                      }}
+                    >
+                      📸 Capture Evidence Photo
+                    </button>
+                  )}
                   <button
                     className="btn-enterprise secondary"
                     onClick={() => toggleFullscreen(dedicatedCameraRef)}
@@ -2448,7 +2594,16 @@ export default function App() {
 
               {/* Large Camera Feed Display Box */}
               <div className="camera-preview-box" style={{ height: 'calc(100vh - 250px)', minHeight: '480px', maxHeight: '720px', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
-                {isFireActive || cameraState === 'Live' || cameraState === 'Connecting' || cameraState === 'Reconnecting' ? (
+                {webcamState.isActive && (cameraSource === 'webcam' || cameraSource === 'auto' || isFireActive) ? (
+                  <video
+                    ref={dedicatedWebcamVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="camera-video-feed"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
+                  />
+                ) : isFireActive || cameraState === 'Live' || cameraState === 'Connecting' || cameraState === 'Reconnecting' ? (
                   cameraState === 'Live' ? (
                     <img
                       src={liveStreamUrl}
@@ -2479,15 +2634,27 @@ export default function App() {
                 ) : (
                   <div className="camera-standby-overlay">
                     <div style={{ fontSize: '42px', marginBottom: '12px' }}>📹</div>
-                    <div className="camera-standby-title" style={{ fontSize: '16px' }}>ESP32-CAM Surveillance Standby</div>
-                    <div className="camera-standby-desc">Live camera feed activates automatically on fire detection. You can also preview or test the stream manually.</div>
-                    <button
-                      className="btn-enterprise secondary"
-                      onClick={manualRetryStream}
-                      style={{ marginTop: '14px', background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', borderColor: 'rgba(255, 255, 255, 0.2)' }}
-                    >
-                      ▶ Test / Preview Camera Stream
-                    </button>
+                    <div className="camera-standby-title" style={{ fontSize: '16px' }}>Surveillance System Standby</div>
+                    <div className="camera-standby-desc">Laptop WebCam and ESP32-CAM both activate automatically on confirmed fire alarms. You can also start the stream manually.</div>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+                      <button
+                        className="btn-enterprise secondary"
+                        onClick={() => {
+                          setCameraSource('webcam');
+                          webcamService.startWebcam().catch(err => console.warn(err));
+                        }}
+                        style={{ background: '#2563EB', color: '#FFFFFF', borderColor: '#3B82F6' }}
+                      >
+                        📹 Start Laptop WebCam
+                      </button>
+                      <button
+                        className="btn-enterprise secondary"
+                        onClick={manualRetryStream}
+                        style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', borderColor: 'rgba(255, 255, 255, 0.2)' }}
+                      >
+                        ▶ Test ESP32-CAM Stream
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -2495,8 +2662,8 @@ export default function App() {
                 <div className="camera-timestamp-tag" style={{ top: '16px', left: '16px', fontSize: '12px', padding: '4px 10px' }}>
                   REC ● {dateStr} {timeStr}
                 </div>
-                <div className="camera-channel-tag" style={{ bottom: '16px', right: '16px', fontSize: '12px', padding: '4px 10px' }}>
-                  NODE #01 — ESP32-CAM Relay ({cameraState.toUpperCase()})
+                <div className="camera-channel-tag font-mono" style={{ bottom: '16px', right: '16px', fontSize: '12px', padding: '4px 10px' }}>
+                  {webcamState.isActive ? 'NODE #02 — LAPTOP WEBCAM (720p HD)' : `NODE #01 — ESP32-CAM Relay (${cameraState.toUpperCase()})`}
                 </div>
               </div>
             </div>
