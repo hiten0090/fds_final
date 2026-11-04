@@ -1634,18 +1634,9 @@ export default function App() {
              ================================================================= */}
           <section className={`page-section ${currentTab === 'overview' ? 'active' : ''}`}>
 
-            {/* Top Facility Header Banner (Matching Reference Video) */}
-            {/* Top Facility Header Banner (Matching Reference Video) */}
+            {/* Top Facility Control Toolbar (Actions fill area) */}
             <div className="facility-dashboard-header" style={{ marginBottom: '14px' }}>
-              <div className="facility-header-left">
-                <div className="facility-badge-tag-wrap">
-                  <span className="facility-badge-tag">FACILITY MONITOR</span>
-                  <span className="facility-sector-tag">• Sector 4 Battery &amp; Chemical Storage</span>
-                </div>
-                <h2 className="facility-main-title">{facilityLocation?.facilityName || 'Main Storage Containment'}</h2>
-              </div>
-
-              <div className="facility-header-actions">
+              <div className="facility-header-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="facility-select-wrapper">
                   <select
                     className="facility-level-select font-mono"
@@ -1660,32 +1651,34 @@ export default function App() {
                   </select>
                 </div>
 
-                <button
-                  className="btn-facility-action"
-                  onClick={runDiagnosticTest}
-                  title="Simulate 3-stage emergency drill test"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                  </svg>
-                  <span>{incidentStage > 0 ? `Drill (${incidentStage}/3)` : 'Fire Drill'}</span>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    className="btn-facility-action"
+                    onClick={runDiagnosticTest}
+                    title="Simulate 3-stage emergency drill test"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>{incidentStage > 0 ? `Drill (${incidentStage}/3)` : 'Fire Drill'}</span>
+                  </button>
 
-                <button
-                  className={`btn-facility-action ${audioState.isUnlocked ? 'siren-armed' : ''}`}
-                  onClick={() => audioService.unlockAudio()}
-                  title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to arm siren audio in browser'}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    {audioState.isUnlocked ? (
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    ) : (
-                      <line x1="23" y1="9" x2="17" y2="15"></line>
-                    )}
-                  </svg>
-                  <span>{audioState.isUnlocked ? 'Siren Armed' : 'Mute (10m)'}</span>
-                </button>
+                  <button
+                    className={`btn-facility-action ${audioState.isUnlocked ? 'siren-armed' : ''}`}
+                    onClick={() => audioService.unlockAudio()}
+                    title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to arm siren audio in browser'}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      {audioState.isUnlocked ? (
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                      ) : (
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                      )}
+                    </svg>
+                    <span>{audioState.isUnlocked ? 'Siren Armed' : 'Mute (10m)'}</span>
+                  </button>
+                </div>
               </div>
             </div>
 

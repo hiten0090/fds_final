@@ -108,55 +108,6 @@ export default function FacilityLocationCard({
 
       {/* Main Content Info */}
       <div className="facility-loc-body">
-        {isConfigured ? (
-          <div className="facility-loc-details">
-            <div className="facility-name-row">
-              <span className="facility-display-name">
-                {location.facilityName || 'FireGuard Monitored Facility'}
-              </span>
-              <span className="location-source-pill" title="Privacy: Clarifies whether coordinates represent fixed facility or device">
-                {sourceLabel}
-              </span>
-            </div>
-
-            {location.address && (
-              <div className="facility-address-text">
-                <span style={{ fontWeight: 600 }}>Address:</span> {location.address}
-              </div>
-            )}
-
-            {(typeof location.latitude === 'number' && typeof location.longitude === 'number') && (
-              <div className="facility-coords-row">
-                <span className="coord-tag">
-                  LAT: <strong>{location.latitude.toFixed(6)}</strong>
-                </span>
-                <span className="coord-tag">
-                  LNG: <strong>{location.longitude.toFixed(6)}</strong>
-                </span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="facility-unconfigured-notice">
-            <div style={{ fontSize: '20px', marginBottom: '4px' }}>🗺️</div>
-            <div style={{ fontWeight: 700, fontSize: '13px', color: isEmergency ? '#B91C1C' : 'var(--text-primary)' }}>
-              Facility location not configured
-            </div>
-            <div style={{ fontSize: '11.5px', color: isEmergency ? '#991B1B' : 'var(--text-secondary)', marginTop: '2px' }}>
-              Set coordinates or facility address so emergency responders can locate this site instantly.
-            </div>
-            {onOpenConfig && (
-              <button
-                onClick={onOpenConfig}
-                className={`btn-enterprise ${isEmergency ? 'danger' : 'secondary'}`}
-                style={{ marginTop: '10px', padding: '6px 14px', fontSize: '12px' }}
-              >
-                📍 Configure Location Now
-              </button>
-            )}
-          </div>
-        )}
-
         {/* Action Buttons */}
         {isConfigured && (
           <div className="facility-actions-row">

@@ -2850,7 +2850,8 @@ body.popup-open {
 
 .map-display-area {
   position: relative;
-  height: 145px;
+  height: 230px;
+  min-height: 230px;
   width: 100%;
   background: #0B132B;
 }
