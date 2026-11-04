@@ -1,0 +1,29 @@
+{
+  "name": "smart-fire-detection-backend",
+  "version": "1.0.0",
+  "description": "Production-ready Node.js backend for Smart Fire Detection project with Supabase Realtime, ESP32-CAM MJPEG stream relay, and WebSockets.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "fire-detection",
+    "esp32",
+    "esp32-cam",
+    "supabase",
+    "express",
+    "websocket",
+    "mjpeg-stream"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}
