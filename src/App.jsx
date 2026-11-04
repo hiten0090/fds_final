@@ -1576,18 +1576,6 @@ export default function App() {
                 <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
-
-            {/* Breadcrumb Navigation Matching Screenshot: Baytown Complex > Sector 4 Console • Operational */}
-            <div className="header-breadcrumb-row">
-              <span className="breadcrumb-site">Baytown Complex</span>
-              <span className="breadcrumb-arrow">›</span>
-              <span className="breadcrumb-target">Sector 4 Console</span>
-              <span className="breadcrumb-sep">•</span>
-              <span className="header-operational-pill">
-                <span className="status-dot-sm connected"></span>
-                <span>Operational</span>
-              </span>
-            </div>
           </div>
 
           <div className="header-right">
