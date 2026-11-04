@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
-export default function BackendDataTable({ isEmergency }) {
+export default function BackendDataTable({ isEmergency, style }) {
   const [tableData, setTableData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState('connecting');
@@ -72,7 +72,10 @@ export default function BackendDataTable({ isEmergency }) {
   };
 
   return (
-    <div className={`enterprise-card backend-data-table-card ${isEmergency ? 'emergency-sms-theme' : ''}`} style={{ marginTop: '20px' }}>
+    <div
+      className={`enterprise-card backend-data-table-card ${isEmergency ? 'emergency-sms-theme' : ''}`}
+      style={{ marginTop: '0', display: 'flex', flexDirection: 'column', ...style }}
+    >
       <div className="card-header-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="card-title-left">
           <span style={{ fontSize: '16px' }}>🗄️</span>
@@ -103,7 +106,7 @@ export default function BackendDataTable({ isEmergency }) {
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto', marginTop: '12px' }}>
+      <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '380px', marginTop: '12px', flex: 1 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontFamily: 'var(--font-tactical)', letterSpacing: '0.06em' }}>

@@ -1634,112 +1634,6 @@ export default function App() {
              ================================================================= */}
           <section className={`page-section ${currentTab === 'overview' ? 'active' : ''}`}>
 
-            {/* Top Facility Control Toolbar (Actions fill area) */}
-            <div className="facility-dashboard-header" style={{ marginBottom: '14px' }}>
-              <div className="facility-header-actions" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="facility-select-wrapper">
-                  <select
-                    className="facility-level-select font-mono"
-                    value={selectedFacilityLevel}
-                    onChange={(e) => setSelectedFacilityLevel(e.target.value)}
-                    title="Select facility level and containment area"
-                  >
-                    <option value="Level 01 - Charging Dock & Storage">Level 01 - Charging Dock &amp; Storage</option>
-                    <option value="Level 02 - Cryogenic Tank Vault">Level 02 - Cryogenic Tank Vault</option>
-                    <option value="Level 03 - Server Rack Containment">Level 03 - Server Rack Containment</option>
-                    <option value="Level 04 - Exhaust Ventilation Plenum">Level 04 - Exhaust Ventilation Plenum</option>
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    className="btn-facility-action"
-                    onClick={runDiagnosticTest}
-                    title="Simulate 3-stage emergency drill test"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>{incidentStage > 0 ? `Drill (${incidentStage}/3)` : 'Fire Drill'}</span>
-                  </button>
-
-                  <button
-                    className={`btn-facility-action ${audioState.isUnlocked ? 'siren-armed' : ''}`}
-                    onClick={() => audioService.unlockAudio()}
-                    title={audioState.isUnlocked ? 'Audio siren armed and unmuted' : 'Click to arm siren audio in browser'}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      {audioState.isUnlocked ? (
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                      ) : (
-                        <line x1="23" y1="9" x2="17" y2="15"></line>
-                      )}
-                    </svg>
-                    <span>{audioState.isUnlocked ? 'Siren Armed' : 'Mute (10m)'}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Environmental Safety Notice Callout Strip (Amber/Warning matching Screenshot) */}
-            <div className={`safety-notice-callout ${isFireActive ? 'notice-critical' : isWarningActive ? 'notice-warning' : 'notice-nominal'}`} style={{ marginBottom: '14px' }}>
-              <div className="notice-icon-box">
-                <span className="notice-warn-triangle">⚠️</span>
-              </div>
-              <div className="notice-content">
-                <div className="notice-headline">
-                  <span className="notice-tag-badge">NOTICE</span>
-                  <span className="notice-title-text">
-                    {isFireActive
-                      ? 'CRITICAL ALERT: Fire Hazard Confirmed — Automatic Safety Containment Engaged!'
-                      : isWarningActive
-                      ? `Elevated Gas & Air Quality concentration in Sector 4-B dock ${safeFormatSmoke(sensors.smoke.val)} (Thresh: 150)`
-                      : `Elevated Gas & Air Quality concentration in Sector 4-B dock ${safeFormatSmoke(sensors.smoke.val)} (Thresh: 150)`}
-                  </span>
-                </div>
-                <span className="notice-sub">
-                  Automated scrubbers engaged. Acknowledged by Safety Engineer.
-                </span>
-              </div>
-              <div className="notice-actions">
-                <button
-                  className="btn-notice-white"
-                  onClick={() => audioService.mute()}
-                  title="Silence audio annunciator"
-                >
-                  Silence Horn
-                </button>
-                <button
-                  className="btn-notice-amber"
-                  onClick={toggleSprinkler}
-                  title="Override Exhaust & Deluge Scrubber"
-                >
-                  Override Exhaust
-                </button>
-              </div>
-            </div>
-
-            {/* Sub-Header: Interactive Telemetry Matrix & Status */}
-            <div className="telemetry-sub-header">
-              <div className="telemetry-sub-left">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="telemetry-sub-dot">●</span>
-                  <span className="telemetry-sub-title">Interactive Telemetry Matrix</span>
-                  <span className="telemetry-sub-pill">{supabaseConnected ? 'LIVE SENSOR DATA' : 'DEMO DATA'}</span>
-                </div>
-                <p className="telemetry-sub-desc">
-                  Live multi-sensor telemetry &amp; containment diagnostics powered by React Bits MagicBento
-                </p>
-              </div>
-              <div className="telemetry-sub-right">
-                <span className="sub-glow-text">✨ Hover or click cards for glow dynamics</span>
-                <span className="sub-sync-status font-mono">
-                  <span className="status-dot-sm connected"></span> Synchronous 500ms
-                </span>
-              </div>
-            </div>
-
             {/* Row 1: Top 2 Wide KPI Cards (FLEET MESH TELEMETRY & SAFETY COMPLIANCE) */}
             <div className="overview-kpi-grid" style={{ marginBottom: '16px' }}>
               {/* Card 1: FLEET MESH TELEMETRY */}
@@ -2195,25 +2089,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: Facility Location & Routing */}
-              <FacilityLocationCard
-                location={facilityLocation}
-                isEmergency={isFireActive}
-                eventTimestamp={fireEventTimestamp || lastUpdateTime}
-                onOpenConfig={() => setIsLocationModalOpen(true)}
-              />
-            </div>
-
-            {/* =================================================================
-               ROW 3: 2-COLUMN GRID (EMERGENCY SMS & SAFETY CONTROLS)
-               ================================================================= */}
-            <div className="overview-row-grid" style={{ marginBottom: '22px' }}>
-              {/* Left Column: Emergency SMS Alerts */}
-              <SmsAlertCard
-                isEmergency={isFireActive}
-                facilityLocation={facilityLocation}
-              />
-
               {/* Right Column: Safety Command & Control Panel */}
               <div className="enterprise-card controls-panel">
                 <div className="card-header-clean">
@@ -2284,6 +2159,20 @@ export default function App() {
                   Calibrate System Baseline
                 </button>
               </div>
+            </div>
+
+            {/* =================================================================
+               ROW 3: 2-COLUMN GRID (LIVE SENSOR DATABASE TABLE + EMERGENCY SMS)
+               ================================================================= */}
+            <div className="overview-row-grid" style={{ marginBottom: '22px' }}>
+              {/* Left Column: Live Sensor Database Records Table */}
+              <BackendDataTable isEmergency={isFireActive} style={{ marginTop: 0 }} />
+
+              {/* Right Column: Emergency SMS Alerts */}
+              <SmsAlertCard
+                isEmergency={isFireActive}
+                facilityLocation={facilityLocation}
+              />
             </div>
 
             {/* =================================================================
