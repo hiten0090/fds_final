@@ -234,11 +234,6 @@ export default function EmergencyPopup({
             <div style={{ fontSize: '13px', fontWeight: 800, color: '#172B4D', marginTop: '2px' }}>
               {loc.facilityName || 'FireGuard Monitored Facility'}
             </div>
-            {loc.address && (
-              <div style={{ fontSize: '11.5px', color: '#64748B', marginTop: '1px' }}>
-                {loc.address}
-              </div>
-            )}
             {mapsUrl && (
               <div style={{ marginTop: '6px' }}>
                 <a
