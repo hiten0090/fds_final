@@ -175,28 +175,31 @@ src/components/WorldMapVisualizer.jsx Visual radar map for facility coordinates.
 esp32_firmware/esp32_firmware.ino   Complete production-ready C++ code for ESP32-S3.
 --------------------------------------------------------------------------------
 
-Frontend Views & Navigation:
-1. Overview Tab (`overview`):
-   - 3 Top Hero Sensor Cards (Ambient Temperature, Gas/Smoke, Optical Flame)
-   - Real-time sparkline telemetry wave charts (Chart.js)
-   - ESP32-CAM & Laptop WebCam Tactical Surveillance Viewport (Auto-Activates on Fire Alerts)
-   - Facility Geolocation Radar & First Responder Routing
-   - Emergency SMS Dispatch Panel
-   - Manual Emergency Override Button
-2. Camera Surveillance Tab (`camera`):
+Frontend Views & Navigation (Streamlined 4-Item Executive Sidebar):
+1. 01 Overview Tab (`overview`):
+   - Executive Facility Command Center with Interactive Telemetry Matrix.
+   - Dual Wide KPI Cards (Fleet Mesh Telemetry & Safety Compliance Rating).
+   - Live Transducer Array (DHT22 Temperature/Humidity + MQ-2 Combustible Gas/Smoke).
+   - Optical Flame Detection UV/IR-ARRAY-01 status.
+   - ESP32-CAM & Laptop WebCam Tactical Surveillance Viewport (Auto-arms on Fire Alerts).
+   - Facility Geolocation Radar & First Responder Routing.
+   - Emergency SMS Dispatch Panel & Safety Command Controls.
+   - Synchronized Environmental Correlation Grand Realtime Chart (1.0 Hz).
+2. 02 Surveillance Tab (`camera`):
    - Dual-Source Surveillance: ESP32-CAM Relay (Remote) + Laptop WebCam (Local built-in camera).
    - Automatic Laptop WebCam Activation: Whenever `isFireActive` is triggered (real fire or drill),
      `navigator.mediaDevices.getUserMedia` automatically turns on the laptop webcam to stream live
      room surveillance both on the dashboard and inside the fullscreen `EmergencyPopup` dialog.
    - Evidence Snapshot Capture: 1-click high-res photo capture with timestamp watermark.
-3. Sensor Analytics Tab (`sensors`):
-   - Detailed expanded historical charts for Temperature, Smoke, and Flame with 
-     time axis, grid lines, and interactive hover tooltips.
-4. Event History Tab (`history`):
-   - Incident summary logs of triggered safety events.
-   - Raw database table dumps were removed for clean UI aesthetics.
-5. Settings Tab (`settings`):
-   - Facility GPS configuration, SMS recipient lists, audio test, hardware health.
+3. 03 Incident History Tab (`history`):
+   - Incident summary logs and chronological audit records of triggered safety events.
+   - Live event badge showing real-time incident count.
+4. 04 Settings Tab (`settings`):
+   - System settings, facility GPS configuration, SMS recipient lists, audio siren test, hardware diagnostics.
+
+Note: Redundant and cluttering sidebar cards (Live Monitoring, Emergency Alerts, and Analytics & Reports)
+were completely removed from the sidebar navigation menu per user specifications, resulting in a clean,
+minimalist 4-item navigation layout with sleek animations and high-contrast monospace index numbering (01-04).
 
 ================================================================================
 6. SMART OFFLINE & DEMO DATA POLICIES

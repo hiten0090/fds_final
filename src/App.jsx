@@ -1474,67 +1474,41 @@ export default function App() {
             </button>
           </li>
 
-          {/* 02 Live Monitoring */}
-          <li className="sidebar-item">
-            <button
-              className={`sidebar-btn ${currentTab === 'live' ? 'active' : ''}`}
-              onClick={() => switchTab('live')}
-              data-nav="live"
-              title="Live Monitoring • Digital Twin Facility"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4.93 19.07a10 10 0 0 1 0-14.14"></path>
-                <path d="M7.76 16.24a6 6 0 0 1 0-8.48"></path>
-                <circle cx="12" cy="12" r="2"></circle>
-                <path d="M16.24 7.76a6 6 0 0 1 0 8.48"></path>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-              </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Live Monitoring</span>}
-              {!sidebarCollapsed && <span className="sidebar-item-num">02</span>}
-            </button>
-          </li>
-
-          {/* 03 Surveillance */}
+          {/* 02 Surveillance */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'camera' ? 'active' : ''}`}
               onClick={() => switchTab('camera')}
               data-nav="camera"
-              title="Camera Surveillance • ESP32-CAM Relay"
+              title="Camera Surveillance • Dual Stream Relay"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M23 7l-7 5 7 5V7z"></path>
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
               </svg>
               {!sidebarCollapsed && <span className="sidebar-btn-label">Surveillance</span>}
-              {!sidebarCollapsed && <span className="sidebar-item-num">03</span>}
-            </button>
-          </li>
-
-          {/* 04 Emergency Alerts */}
-          <li className="sidebar-item">
-            <button
-              className={`sidebar-btn ${currentTab === 'alerts' ? 'active' : ''}`}
-              onClick={() => { if (isFireActive) setIsFireAlertOpen(true); else switchTab('history'); }}
-              data-nav="alerts"
-              title="Emergency Alerts & Notifications"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Emergency Alerts</span>}
               {!sidebarCollapsed && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
-                  <span className="sidebar-badge-amber">{isFireActive ? '1' : '0'}</span>
-                  <span className="sidebar-item-num">04</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                  {webcamState.isActive ? (
+                    <span className="sidebar-badge badge-camera-live">
+                      <span className="sidebar-badge-pulse"></span>CAM
+                    </span>
+                  ) : cameraState === 'Live' ? (
+                    <span className="sidebar-badge badge-camera-live">
+                      <span className="sidebar-badge-pulse"></span>LIVE
+                    </span>
+                  ) : isFireActive ? (
+                    <span className="sidebar-badge badge-camera-alert">ALERT</span>
+                  ) : (
+                    <span className="sidebar-badge badge-camera-stby">STBY</span>
+                  )}
+                  <span className="sidebar-item-num">02</span>
                 </div>
               )}
             </button>
           </li>
 
-          {/* 05 Incident History */}
+          {/* 03 Incident History */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'history' ? 'active' : ''}`}
@@ -1548,31 +1522,15 @@ export default function App() {
               </svg>
               {!sidebarCollapsed && <span className="sidebar-btn-label">Incident History</span>}
               {!sidebarCollapsed && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
-                  <span className="sidebar-badge-gray">{incidents.length || 21}</span>
-                  <span className="sidebar-item-num">05</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                  <span className="sidebar-badge badge-event-count">{incidents.length || 21}</span>
+                  <span className="sidebar-item-num">03</span>
                 </div>
               )}
             </button>
           </li>
 
-          {/* 06 Analytics & Reports */}
-          <li className="sidebar-item">
-            <button
-              className={`sidebar-btn ${currentTab === 'sensors' ? 'active' : ''}`}
-              onClick={() => switchTab('sensors')}
-              data-nav="sensors"
-              title="Analytics & Reports • Sensor Envelopes"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-              {!sidebarCollapsed && <span className="sidebar-btn-label">Analytics &amp; Reports</span>}
-              {!sidebarCollapsed && <span className="sidebar-item-num">06</span>}
-            </button>
-          </li>
-
-          {/* 07 Settings */}
+          {/* 04 Settings */}
           <li className="sidebar-item">
             <button
               className={`sidebar-btn ${currentTab === 'settings' ? 'active' : ''}`}
@@ -1585,7 +1543,7 @@ export default function App() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
               {!sidebarCollapsed && <span className="sidebar-btn-label">Settings</span>}
-              {!sidebarCollapsed && <span className="sidebar-item-num">07</span>}
+              {!sidebarCollapsed && <span className="sidebar-item-num">04</span>}
             </button>
           </li>
         </ul>

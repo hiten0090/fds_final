@@ -149,3 +149,4 @@ class WebcamService {
 }
 
 export const webcamService = new WebcamService();
+
