@@ -1548,57 +1548,6 @@ export default function App() {
           </li>
         </ul>
 
-        {/* Project Credits Team Banner */}
-        {!sidebarCollapsed && (
-          <div className="sidebar-credits-section">
-            <div className="sidebar-credits-card">
-              <div className="credits-badge-row">
-                <span className="credits-badge">DEVELOPED BY</span>
-                <span style={{ fontSize: '9.5px', color: '#94A3B8', fontWeight: 600 }}>v2.4 IoT</span>
-              </div>
-              <div className="credits-team-grid">
-                <div className="credits-member" title="Lakshay Jain">
-                  <span className="credits-initials">LJ</span>
-                  <span className="credits-name">Lakshay Jain</span>
-                </div>
-                <div className="credits-member" title="Arnav Jain">
-                  <span className="credits-initials">AJ</span>
-                  <span className="credits-name">Arnav Jain</span>
-                </div>
-                <div className="credits-member" title="Hiten Shah">
-                  <span className="credits-initials">HS</span>
-                  <span className="credits-name">Hiten Shah</span>
-                </div>
-                <div className="credits-member" title="Bhavye Sani">
-                  <span className="credits-initials">BS</span>
-                  <span className="credits-name">Bhavye Sani</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* User Profile Card (Elena Rostova - Matching Reference Screenshot) */}
-        {!sidebarCollapsed && (
-          <div className="sidebar-user-profile">
-            <div className="profile-avatar">ER</div>
-            <div className="profile-info">
-              <span className="profile-name">Elena Rostova</span>
-              <span className="profile-role">Lead Safety Engineer</span>
-            </div>
-            <button
-              className="profile-action-btn"
-              title="System Profile & Settings"
-              onClick={() => switchTab('settings')}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-            </button>
-          </div>
-        )}
       </aside>
 
       {/* Main Content Area */}
