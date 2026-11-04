@@ -382,17 +382,17 @@ body.popup-open {
 
 /* Active State */
 .sidebar-btn.active {
-  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 55%, #3B82F6 100%);
-  color: #FFFFFF;
-  font-weight: 600;
-  transform: translateX(4px);
-  border-color: transparent;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38), 0 2px 6px rgba(37, 99, 235, 0.25);
-  animation: navActiveGlow 3.5s ease-in-out infinite;
+  background: #EFF6FF;
+  color: #1E40AF;
+  font-weight: 700;
+  transform: none;
+  border-color: #BFDBFE;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
 }
 
 .sidebar-btn.active .sidebar-btn-label {
-  color: #FFFFFF;
+  color: #1E3A8A;
+  font-weight: 700;
 }
 
 .sidebar-btn.active::before {
@@ -401,11 +401,11 @@ body.popup-open {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 4px;
-  height: 22px;
-  background: #FFFFFF;
-  border-radius: 0 4px 4px 0;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.95);
+  width: 3.5px;
+  height: 65%;
+  background: #2563EB;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.4);
 }
 
 @keyframes navActiveGlow {
@@ -437,10 +437,10 @@ body.popup-open {
 
 .sidebar-btn.active svg {
   opacity: 1;
-  color: #FFFFFF;
-  stroke: #FFFFFF;
-  transform: scale(1.1);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+  color: #2563EB;
+  stroke: #2563EB;
+  transform: none;
+  filter: none;
 }
 
 /* Contextual Icon Animations on Hover */
@@ -498,11 +498,12 @@ body.popup-open {
 }
 
 .sidebar-btn.active .sidebar-item-num {
-  color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.22) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  color: #1D4ED8 !important;
+  background: #DBEAFE !important;
+  border-color: #93C5FD !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
   transform: scale(1.02);
 }
 
@@ -567,15 +568,41 @@ body.popup-open {
 
 /* Badge in Active State */
 .sidebar-btn.active .sidebar-badge {
-  background: rgba(255, 255, 255, 0.22) !important;
-  color: #FFFFFF !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4px);
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-camera-stby {
+  background: #E2E8F0 !important;
+  color: #1E293B !important;
+  border-color: #CBD5E1 !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-camera-live {
+  background: #DCFCE7 !important;
+  color: #15803D !important;
+  border-color: #86EFAC !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-camera-alert {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+  border-color: #FCA5A5 !important;
+  font-weight: 800 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-event-count {
+  background: #DBEAFE !important;
+  color: #1E40AF !important;
+  border-color: #93C5FD !important;
+  font-weight: 800 !important;
 }
 
 .sidebar-btn.active .sidebar-badge-pulse {
-  background: #FFFFFF !important;
+  background: #10B981 !important;
 }
 
 .sidebar-btn:hover .sidebar-badge {
@@ -3742,59 +3769,118 @@ body {
   box-shadow: none !important;
 }
 
-/* Sidebar nav button: flat, no gradient, no glow, no translateX */
+/* Sidebar nav button: Professional Industrial Safety Standard */
 .sidebar-btn {
-  border-radius: 4px !important;
-  transition: background-color 0.15s ease, color 0.15s ease !important;
+  border-radius: 8px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  background-color: #FFFFFF !important;
+  color: #1E293B !important;
 }
 
 .sidebar-btn:hover {
-  background-color: #F1F5F9 !important;
+  background-color: #F8FAFC !important;
   color: #0F172A !important;
   transform: none !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+  border-color: #CBD5E1 !important;
+}
+
+.sidebar-btn:hover .sidebar-btn-label {
+  color: #0F172A !important;
+}
+
+.sidebar-btn:hover svg {
+  color: #2563EB !important;
 }
 
 .sidebar-btn.active {
   background: #EFF6FF !important;
-  color: #0051D5 !important;
-  font-weight: 600 !important;
+  color: #1D4ED8 !important;
+  font-weight: 700 !important;
   transform: none !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08) !important;
+  border: 1px solid #BFDBFE !important;
   animation: none !important;
-  border-radius: 4px !important;
+  border-radius: 8px !important;
 }
 
-/* Active left indicator: 3px solid blue line */
+.sidebar-btn.active .sidebar-btn-label {
+  color: #1E3A8A !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Active left indicator: 3.5px solid vivid blue line */
 .sidebar-btn.active::before {
   content: '' !important;
   position: absolute !important;
   left: 0 !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  width: 3px !important;
-  height: 60% !important;
-  background: #0051D5 !important;
-  border-radius: 0 2px 2px 0 !important;
-  box-shadow: none !important;
+  width: 3.5px !important;
+  height: 65% !important;
+  background: #2563EB !important;
+  border-radius: 0 3px 3px 0 !important;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.45) !important;
 }
 
 .sidebar-btn.active svg {
-  color: #0051D5 !important;
-  stroke: currentColor !important;
+  color: #2563EB !important;
+  stroke: #2563EB !important;
   filter: none !important;
   transform: none !important;
+  opacity: 1 !important;
+}
+
+.sidebar-btn.active .sidebar-item-num {
+  color: #1D4ED8 !important;
+  background: #DBEAFE !important;
+  border: 1px solid #93C5FD !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.sidebar-btn.active .sidebar-badge {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-camera-stby {
+  background: #E2E8F0 !important;
+  color: #1E293B !important;
+  border-color: #CBD5E1 !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-camera-live {
+  background: #DCFCE7 !important;
+  color: #15803D !important;
+  border-color: #86EFAC !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-camera-alert {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+  border-color: #FCA5A5 !important;
+  font-weight: 800 !important;
+}
+
+.sidebar-btn.active .sidebar-badge.badge-event-count {
+  background: #DBEAFE !important;
+  color: #1E40AF !important;
+  border-color: #93C5FD !important;
+  font-weight: 800 !important;
 }
 
 .sidebar-btn:active {
   transform: none !important;
-}
-
-/* Sidebar badge in active: no blur */
-.sidebar-btn.active .sidebar-badge {
-  backdrop-filter: none !important;
 }
 
 /* Sidebar credits card: flat */
