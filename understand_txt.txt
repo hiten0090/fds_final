@@ -200,6 +200,8 @@ Frontend Views & Navigation (Streamlined 4-Item Executive Sidebar):
 Note: Redundant and cluttering sidebar cards (Live Monitoring, Emergency Alerts, and Analytics & Reports)
 were completely removed from the sidebar navigation menu per user specifications, resulting in a clean,
 minimalist 4-item navigation layout with sleek animations and high-contrast monospace index numbering (01-04).
+The entire dashboard UI features spring-loaded popping hover animations (cubic-bezier(0.34, 1.56, 0.64, 1)),
+shimmering light beam progress waves, floating status icons, and tactile haptic press feedback on all controls.
 
 ================================================================================
 6. SMART OFFLINE & DEMO DATA POLICIES
