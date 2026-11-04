@@ -87,7 +87,7 @@ export default function BackendDataTable({ isEmergency }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10.5px', background: '#F1F5F9', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, fontFamily: 'var(--font-tactical)', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '10.5px', background: '#F1F5F9', color: '#475569', padding: '3px 10px', borderRadius: '8px', fontWeight: 700, fontFamily: 'var(--font-tactical)', letterSpacing: '0.04em' }}>
             {tableData.length} RECORDS LOADED
           </span>
           <button

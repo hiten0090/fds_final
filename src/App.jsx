@@ -2095,7 +2095,7 @@ export default function App() {
                         title="Toggle Fullscreen Viewport"
                         style={{
                           background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)',
-                          color: '#F8FAFC', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px',
+                          color: '#F8FAFC', borderRadius: '8px', cursor: 'pointer', padding: '3px 8px',
                           fontSize: '11px', lineHeight: 1
                         }}
                       >
@@ -2177,10 +2177,10 @@ export default function App() {
                       style={{
                         background: 'transparent',
                         border: '1px solid rgba(255, 255, 255, 0.25)',
-                        borderRadius: '3px',
+                        borderRadius: '8px',
                         color: '#38BDF8',
                         fontSize: '9.5px',
-                        padding: '1.5px 6px',
+                        padding: '2px 8px',
                         cursor: 'pointer',
                         fontWeight: 600,
                         textTransform: 'uppercase'
@@ -2247,8 +2247,8 @@ export default function App() {
                   </span>
                   <span className={`status-pill ${sprinklerActive ? 'pill-active' : 'pill-idle'}`} style={{
                     fontSize: '10.5px',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
                     background: sprinklerActive ? '#EFF6FF' : '#F1F5F9',
                     color: sprinklerActive ? '#2563EB' : '#64748B',
                     border: '1px solid ' + (sprinklerActive ? '#BFDBFE' : '#E2E8F0'),
@@ -2664,7 +2664,7 @@ export default function App() {
                     background: historyTabMode === 'incidents' ? '#2563EB' : '#FFFFFF',
                     color: historyTabMode === 'incidents' ? '#FFFFFF' : '#334155',
                     border: '1px solid ' + (historyTabMode === 'incidents' ? '#2563EB' : '#CBD5E1'),
-                    borderRadius: '6px'
+                    borderRadius: '10px'
                   }}
                 >
                   📋 Incident Logs ({incidents.length})
@@ -2678,7 +2678,7 @@ export default function App() {
                     background: historyTabMode === 'live_table' ? '#2563EB' : '#FFFFFF',
                     color: historyTabMode === 'live_table' ? '#FFFFFF' : '#334155',
                     border: '1px solid ' + (historyTabMode === 'live_table' ? '#2563EB' : '#CBD5E1'),
-                    borderRadius: '6px'
+                    borderRadius: '10px'
                   }}
                 >
                   ⚡ Supabase Live Database Stream

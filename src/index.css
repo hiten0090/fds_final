@@ -3765,13 +3765,13 @@ body {
 }
 
 .brand-icon-wrapper {
-  border-radius: 4px !important;
+  border-radius: 12px !important;
   box-shadow: none !important;
 }
 
 /* Sidebar nav button: Professional Industrial Safety Standard */
 .sidebar-btn {
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   border: 1px solid rgba(226, 232, 240, 0.95) !important;
   background-color: #FFFFFF !important;
@@ -3802,7 +3802,7 @@ body {
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08) !important;
   border: 1px solid #BFDBFE !important;
   animation: none !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
 }
 
 .sidebar-btn.active .sidebar-btn-label {
@@ -3883,18 +3883,18 @@ body {
   transform: none !important;
 }
 
-/* Sidebar credits card: flat */
+/* Sidebar credits card & gateway bar: smooth rounded */
 .sidebar-credits-card {
-  border-radius: 4px !important;
+  border-radius: 12px !important;
   box-shadow: none !important;
 }
 
 .sidebar-gateway-bar {
-  border-radius: 4px !important;
+  border-radius: 10px !important;
   box-shadow: none !important;
 }
 
-/* ── All Cards: Flat sharp design ─────────────────────────────────────────── */
+/* ── All Cards: Smooth Modern Industrial Curves ───────────────────────────── */
 .enterprise-card,
 .hero-sensor-card,
 .sensor-detail-card,
@@ -3906,10 +3906,14 @@ body {
 .audit-logs-card,
 .dedicated-camera-card,
 .settings-diagnostics-card,
-.backend-data-table-card {
-  border-radius: 6px !important;
+.backend-data-table-card,
+.kpi-summary-card,
+.live-transducer-array-card,
+.optical-flame-card,
+.grand-correlation-card {
+  border-radius: 14px !important;
   border: 1px solid #D1D5DB !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03) !important;
   background: #FFFFFF !important;
 }
 
@@ -3987,21 +3991,21 @@ body {
   border-top: 3px solid #10B981 !important;
 }
 
-/* ── hero-icon-box: no hover spin/scale ──────────────────────────────────── */
+/* ── hero-icon-box: smooth rounded corners ───────────────────────────────── */
 .hero-sensor-card:hover .hero-icon-box {
   transform: none !important;
   box-shadow: none !important;
 }
 
 .hero-icon-box {
-  border-radius: 4px !important;
+  border-radius: 12px !important;
 }
 
-/* ── Box variants: flat borders ──────────────────────────────────────────── */
-.box-orange { border-radius: 4px !important; }
-.box-purple { border-radius: 4px !important; }
-.box-green  { border-radius: 4px !important; }
-.box-red    { box-shadow: none !important; border-radius: 4px !important; }
+/* ── Box variants: smooth rounded corners ────────────────────────────────── */
+.box-orange { border-radius: 12px !important; }
+.box-purple { border-radius: 12px !important; }
+.box-green  { border-radius: 12px !important; }
+.box-red    { box-shadow: none !important; border-radius: 12px !important; }
 
 /* ── Critical flame: keep alert border but remove glow ───────────────────── */
 .card-flame-critical {
@@ -4033,10 +4037,10 @@ body {
   transform: none !important;
 }
 
-/* ── Disconnected value: flat, no gradient ───────────────────────────────── */
+/* ── Disconnected value: smooth rounded ─────────────────────────────────── */
 .hero-reading-value.is-disconnected {
   background: #FEF2F2 !important;
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
 }
 
@@ -4056,7 +4060,7 @@ body {
   to   { opacity: 1; }
 }
 
-/* ── Header pill: flat borders, no hover scale ───────────────────────────── */
+/* ── Header pill: smooth borders, no hover scale ─────────────────────────── */
 .header-live-status-pill:hover {
   transform: none !important;
 }
@@ -4066,37 +4070,37 @@ body {
 }
 
 .header-icon-badge {
-  border-radius: 4px !important;
+  border-radius: 10px !important;
   box-shadow: none !important;
 }
 
-/* ── Safety matrix rows: flat border-radius ──────────────────────────────── */
+/* ── Safety matrix rows: smooth border-radius ────────────────────────────── */
 .safety-matrix-row {
-  border-radius: 4px !important;
+  border-radius: 10px !important;
 }
 
-/* ── Rack node chip: flat ────────────────────────────────────────────────── */
+/* ── Rack node chip: smooth rounded ──────────────────────────────────────── */
 .rack-node-chip {
-  border-radius: 4px !important;
+  border-radius: 8px !important;
 }
 
 .rack-node-chip:hover {
   transform: none !important;
 }
 
-/* ── System status item: flat ────────────────────────────────────────────── */
+/* ── System status item: smooth rounded ──────────────────────────────────── */
 .system-status-item {
-  border-radius: 4px !important;
+  border-radius: 10px !important;
 }
 
-/* ── Sensor node mini: flat ──────────────────────────────────────────────── */
+/* ── Sensor node mini: smooth rounded ────────────────────────────────────── */
 .sensor-node-mini {
-  border-radius: 4px !important;
+  border-radius: 10px !important;
 }
 
-/* ── Buttons: flat, no hover lift ────────────────────────────────────────── */
+/* ── Buttons: smooth rounded ─────────────────────────────────────────────── */
 .btn-enterprise {
-  border-radius: 4px !important;
+  border-radius: 10px !important;
   box-shadow: none !important;
 }
 
@@ -4491,8 +4495,8 @@ body {
   color: #2563EB;
   font-size: 9.5px;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 2.5px 8.5px;
+  border-radius: 8px;
   letter-spacing: 0.08em;
   font-family: var(--font-tactical);
 }
@@ -4528,7 +4532,7 @@ body {
 .btn-facility-action {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 7px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -4560,8 +4564,8 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 10px 16px;
-  border-radius: 6px;
+  padding: 12px 18px;
+  border-radius: 14px;
   border: 1px solid #E2E8F0;
   flex-wrap: wrap;
 }
@@ -4611,7 +4615,7 @@ body {
 .btn-notice-dismiss {
   background: transparent;
   border: 1px solid currentColor;
-  border-radius: 4px;
+  border-radius: 8px;
   padding: 3px 10px;
   font-size: 11px;
   font-weight: 700;
@@ -4671,8 +4675,8 @@ body {
   color: #047857;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 2.5px 8.5px;
+  border-radius: 8px;
 }
 
 .kpi-badge-locked {
@@ -4681,8 +4685,8 @@ body {
   color: #475569;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 2.5px 8.5px;
+  border-radius: 8px;
   font-family: var(--font-mono);
 }
 
@@ -4778,8 +4782,8 @@ body {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 5px 13px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -4840,8 +4844,8 @@ body {
   background: #EFF6FF;
   border: 1px solid #BFDBFE;
   color: #2563EB;
-  padding: 1.5px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 8px;
   font-weight: 700;
 }
 
@@ -4880,8 +4884,8 @@ body {
   color: #334155;
   font-size: 11.5px;
   font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -4898,7 +4902,7 @@ body {
 
 .grand-chart-viewport {
   border: 1px solid #F1F5F9;
-  border-radius: 6px;
+  border-radius: 12px;
   background: #FAFBFD;
   padding: 8px 12px;
 }
@@ -5019,7 +5023,7 @@ body {
   color: #94A3B8;
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5284,8 +5288,8 @@ body {
   color: #FFFFFF;
   font-size: 9.5px;
   font-weight: 800;
-  padding: 1.5px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
   letter-spacing: 0.06em;
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -5303,7 +5307,7 @@ body {
 .btn-notice-white {
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
@@ -5328,7 +5332,7 @@ body {
 .btn-notice-amber {
   background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
   border: 1px solid #B45309;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
@@ -5377,8 +5381,8 @@ body {
   color: #2563EB;
   font-size: 9.5px;
   font-weight: 700;
-  padding: 1.5px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 8px;
   font-family: var(--font-mono);
 }
 
@@ -5698,8 +5702,8 @@ body {
   background: #F1F5F9;
   border: 1px solid #E2E8F0;
   color: #475569;
-  padding: 1.5px 5px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 8px;
   font-weight: 600;
 }
 
@@ -5907,8 +5911,8 @@ body {
   font-weight: 700;
   color: #2563EB;
   cursor: pointer;
-  padding: 3.5px 9px;
-  border-radius: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
   transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
   font-family: var(--font-heading);
 }
@@ -6098,8 +6102,8 @@ body {
   align-items: center;
   justify-content: space-between;
   color: #475569;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border-radius: 8px;
   transition: background 0.15s ease;
 }
 
@@ -6134,7 +6138,7 @@ body {
   display: flex;
   align-items: center;
   background: #F1F5F9;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 3px;
   gap: 3px;
 }
@@ -6146,7 +6150,7 @@ body {
   font-weight: 600;
   color: #64748B;
   padding: 5px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -6276,9 +6280,9 @@ body {
   align-items: center;
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 6px;
-  padding: 2px;
-  gap: 2px;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
 }
 
 .btn-source-tab {
@@ -6288,7 +6292,7 @@ body {
   font-weight: 700;
   color: #94A3B8;
   padding: 3px 8px;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -6315,6 +6319,7 @@ body {
   height: 100%;
   object-fit: cover;
   background: #000000;
+  border-radius: 12px;
 }
 
 .tactical-snap-btn {
@@ -6323,8 +6328,8 @@ body {
   color: #F8FAFC;
   font-size: 10px;
   font-weight: 700;
-  padding: 2.5px 8px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -6345,7 +6350,7 @@ body {
 .popup-webcam-card {
   background: #0F172A;
   border: 1px solid #1E293B;
-  border-radius: 8px;
+  border-radius: 14px;
   overflow: hidden;
   margin: 12px 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -6371,8 +6376,8 @@ body {
   font-size: 9.5px;
   background: #1E293B;
   color: #38BDF8;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-weight: 700;
 }
 
@@ -6386,12 +6391,15 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 .popup-video-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .popup-live-video {
@@ -6399,6 +6407,7 @@ body {
   height: 100%;
   object-fit: cover;
   background: #000000;
+  border-radius: 12px;
 }
 
 .popup-video-overlay {
@@ -6409,8 +6418,8 @@ body {
   color: #FFFFFF;
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 2.5px 8.5px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -6425,6 +6434,7 @@ body {
   justify-content: center;
   color: #94A3B8;
   background: #0F172A;
+  border-radius: 12px;
 }
 
 .webcam-activating-box {
@@ -6455,8 +6465,8 @@ body {
   background: #2563EB;
   color: #FFFFFF;
   border: none;
-  border-radius: 4px;
-  padding: 5px 12px;
+  border-radius: 8px;
+  padding: 6px 14px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -6483,8 +6493,8 @@ body {
   color: #F8FAFC;
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -6510,4 +6520,134 @@ body {
   height: 7px;
   border-radius: 50%;
   background: #64748B;
+}
+
+/* ==========================================================================
+   28. GLOBAL SMOOTH CORNER REFINEMENT (Ultra-Smooth Modern Design)
+   Ensuring all cards, buttons, badges, chips, panels and inputs are smooth
+   ========================================================================== */
+.enterprise-card,
+.hero-sensor-card,
+.sensor-detail-card,
+.facility-location-card,
+.sms-alert-card,
+.controls-panel,
+.camera-feed-card,
+.incident-card-enterprise,
+.audit-logs-card,
+.dedicated-camera-card,
+.settings-diagnostics-card,
+.backend-data-table-card,
+.kpi-summary-card,
+.live-transducer-array-card,
+.optical-flame-card,
+.grand-correlation-card,
+.camera-preview-box,
+.safety-notice-callout,
+.emergency-card,
+.location-modal-card {
+  border-radius: 14px !important;
+}
+
+/* Smooth Icon Boxes & Visual Cubes */
+.hero-icon-box,
+.box-orange,
+.box-purple,
+.box-green,
+.box-red,
+.brand-icon-wrapper,
+.array-icon-box,
+.optical-icon-box,
+.kpi-icon-circle,
+.notice-icon-box,
+.header-icon-badge {
+  border-radius: 12px !important;
+}
+
+/* Smooth Interactive Buttons */
+.btn-enterprise,
+.btn-facility-action,
+.btn-notice-white,
+.btn-notice-amber,
+.btn-export-telemetry,
+.btn-generate-report,
+.btn-emergency-primary,
+.btn-emergency-secondary,
+.btn-webcam-retry,
+.btn-webcam-snap,
+.btn-cam-control,
+.btn-camera-ptz,
+.sidebar-btn,
+.sidebar-btn.active,
+.facility-level-select,
+.settings-input,
+.loc-form-input,
+.btn-time-filter,
+.header-emergency-btn {
+  border-radius: 10px !important;
+}
+
+/* Smooth Chips, Pills, Badges & Small Controls */
+.sidebar-item-num,
+.correlation-badge,
+.facility-badge-tag,
+.array-sensor-badge,
+.array-link-btn,
+.tactical-source-toggle,
+.btn-source-tab,
+.tactical-snap-btn,
+.popup-webcam-badge,
+.popup-video-overlay,
+.btn-notice-dismiss,
+.diagnostic-row,
+.rack-node-chip,
+.safety-matrix-row,
+.system-status-item,
+.sensor-node-mini,
+.table-pagination-btn,
+.header-metric-pill,
+.credits-member,
+.detail-chip,
+.cal-tag,
+.optic-tag,
+.chart-time-filter-btn,
+.chart-tooltip-badge,
+.sensor-metric-chip,
+.table-cell-chip,
+.incident-badge-pill,
+.instruction-item,
+.loc-modal-close-btn,
+.btn-hud-control,
+.telemetry-sub-pill,
+.notice-tag-badge,
+.status-pill {
+  border-radius: 8px !important;
+}
+
+/* Full Smooth Capsules for Status Badges */
+.header-operational-pill,
+.header-emergency-pill-btn,
+.sidebar-badge,
+.kpi-badge-live,
+.kpi-badge-locked,
+.kpi-badge-green,
+.kpi-badge-amber,
+.array-chip-live,
+.severity-container {
+  border-radius: 9999px !important;
+}
+
+/* Smooth Video & Preview Viewports */
+.camera-video-feed,
+.popup-webcam-card,
+.popup-live-video,
+.popup-webcam-viewport,
+.grand-chart-viewport,
+.table-wrapper {
+  border-radius: 12px !important;
+}
+
+/* Smooth Scrollbars */
+::-webkit-scrollbar-thumb {
+  border-radius: 8px !important;
 }

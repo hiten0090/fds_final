@@ -227,7 +227,7 @@ export default function EmergencyPopup({
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#7F1D1D', letterSpacing: '0.04em' }}>
                 📍 FACILITY DISPATCH LOCATION
               </span>
-              <span style={{ fontSize: '10px', background: '#FEE2E2', color: '#991B1B', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '10px', background: '#FEE2E2', color: '#991B1B', padding: '2px 8px', borderRadius: '8px', fontWeight: 600 }}>
                 {loc.source === 'device' ? 'Device GPS' : 'Verified Facility'}
               </span>
             </div>
@@ -270,7 +270,7 @@ export default function EmergencyPopup({
                 </div>
               </div>
             </div>
-            <span style={{ fontSize: '10px', background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+            <span style={{ fontSize: '10px', background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '8px', fontWeight: 700 }}>
               {recipients.length > 0 ? `${recipients.length} Recipient${recipients.length > 1 ? 's' : ''}` : 'No Recipient'}
             </span>
           </div>

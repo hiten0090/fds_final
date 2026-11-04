@@ -247,7 +247,7 @@ export default function SmsAlertCard({ isEmergency, facilityLocation }) {
 
         {/* Configure Gateway & Provider Form */}
         {isConfiguringGateway && (
-          <form onSubmit={handleSaveGateway} style={{ marginTop: '12px', padding: '10px', background: '#F8FAFC', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+          <form onSubmit={handleSaveGateway} style={{ marginTop: '12px', padding: '12px', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B', marginBottom: '8px' }}>
               📡 SMS GATEWAY & DELIVERY CONFIGURATION
             </div>
